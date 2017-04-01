@@ -1,0 +1,116 @@
+---
+title: "Understanding random forests with randomForestExplainer"
+author: "Ola Paluszyńska"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Understanding random forests with randomForestExplainer}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+
+This is a preliminary draft of the vignette for `randomForestExplainer` package. I will provide examples of usage of new functions as I create them to track package development.
+
+I will use the following packages:
+
+```{r}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(randomForest)
+```
+
+# Data
+
+I will use the data on Glioblastoma that contain only 125 observations but 16119 variables. The goal of my random forest will be to predict whether the patient died or not within a year from diagnosis (variable `death1y`).
+
+```{r}
+load("GlioblastomaWide.rda")
+```
+
+First I need to change our dependent variable into a factor and remove variables for which there are NAs (otherewise we would have to remove corresponding observations to build a random forest and our sample is very small anyway). Additionally, I remove the variable `sampleID` which is just the ID of the patient.
+
+```{r}
+GlioblastomaWide$death1y <- as.factor(GlioblastomaWide$death1y)
+remove <- is.na(GlioblastomaWide) %>% colSums()
+GlioblastomaWide <- GlioblastomaWide[, remove == 0]
+rm(remove)
+GlioblastomaWide <- GlioblastomaWide[, -1]
+```
+
+Now, I use the `randomForest` package to build a random forest for the data. I need the forest to have as many trees as possible, as with thousands of variables the probablility of each being considered for a split of a node is low and for analyzing the structure of the random forest I need a reasonable number of such instances for each variable, as I cannot say anything about the importance of a variable that was not even considered for a split.
+
+As building of the below forest takes a long time I load it from the memory.
+
+```{r}
+# forest <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000)
+# save(forest, file = "GlioblastomaWide_forest.rda")
+load("GlioblastomaWide_forest.rda")
+```
+
+[here we will check if the random forest is a reasonable predictor]
+
+# Minimal depth
+
+## Distribution of minimal depth
+
+At this point I will demonstrate new ways in which a random forest can be interpreted using the distribution of minimal depth across its trees. Below, I show how to use the four functions provided in the file min_depth_distribution.R to explore my random forest.
+
+The most fundamental building block here is the function `calculate_tree_depth` that calculates the depth of each node for a single tree. As an argument, it takes the data frame produced by the `randomForest::getTree` function. I consider the first tree from our forest:
+
+```{r}
+frame <- getTree(forest, k = 1, labelVar = TRUE) # the argument labelVar has to be set to TRUE!
+head(frame) # this is how such frame looks like
+head(calculate_tree_depth(frame)) # this is what our function produces
+```
+
+The function `min_depth_distribution` builds upon the above result -- it creates one data frame for the whole forest and then for each tree calculates the minimal depth of all variables that were used for splitting within it. It takes the forest as its argument and returns a data frame with the distribution of minimal depth across trees.
+
+```{r}
+min_depth_frame <- min_depth_distribution(forest)
+head(min_depth_frame, n = 10) # this is how the output looks like
+```
+
+It is worth noting, that using this function we only get data concerning the minimal depth for each variable that was used for splitting in a given tree. We do not fill the frame with NAs whenever a variable does not have a minimal depth in a tree (because it was not used for splitting in it) as when there are many variables (as is the case in our example) the resulting data frame would be enormous and one could easily run out of memory and get an error. In other cases it is simple to do with the following code:
+
+```{r}
+# library(tidyr)
+# min_depth_frame <- tidyr::complete(min_depth_frame, tree = 1:forest$ntree, variable = labels(forest$terms))
+```
+
+The function `min_depth_count` counts how many times each variable had each minimal depth in a tree. It also takes into account the instances when a variable did not appear as split variable in a tree (then `minimal_depth = NA`). It takes the result of `min_depth_distribution` as an argument and returns a list of two data frames presented below:
+
+```{r}
+min_depth_count_list <- min_depth_count(min_depth_frame)
+head(min_depth_count_list[[1]], n = 10)
+```
+
+The first data frame from the list (above) contains the count of occurances of each variable and minimal_depth combination.
+
+```{r}
+head(min_depth_count_list[[2]], n = 10)
+```
+
+The second data frame from the list (above) contains the number of trees in which each variable appeared as a splitting variable.
+
+Finally, the function `plot_min_depth_distribution` plots the minimal depth distribution for a maximum of `k` variables with highest mean minimal depth (default is 10). For this, only variables that were used for splitting in at least `min_no_of_trees` number of trees are used -- this argument is of particular interest in cases with many variables like in our example, as some variables may have a low mean minimal depth only due to chance (e.g., they were present only in one out of 10000 trees and there happend to be used to splitting close to the root). The default value for this parameter is half of the maximal number of trees in which any variable was used for splitting (in our case this is half of 94).
+
+```{r, fig.width = 6, fig.height = 6}
+plot_min_depth_distribution(min_depth_frame)
+```
+
+The vertical bar indicates the mean minimal depth rescaled such that the maximal possible value is the maximal number of trees in which any variable was used for splitting (this is 94 in our case -- for variable SH3BP2). Note, that the number of NA's plotted is the number of NA's that a variable has on top of the minimal number of NA's.
+
+Below, we use the function again with different options:
+
+```{r, fig.width = 6, fig.height = 9}
+plot_min_depth_distribution(min_depth_frame, k = 15, min_no_of_trees = 50)
+```
+
+Of course, the result is very sensitive to changes in parameters `k` and `min_no_of_trees`. This is because we have so many variables and their occurance as split variables is generally rare (less than 0.1%). That is just another argument for looking at the whole distribution of minimal depth instead of mean minimal depth, especially for such datasets as this one.
+
