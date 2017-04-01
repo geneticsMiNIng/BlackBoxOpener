@@ -8,9 +8,11 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports:
-  data.table (>= 1.10.4)
-  dplyr (>= 0.5.0)
-  ggplot2 (>= 2.2.1)
+  data.table (>= 1.10.4),
+  dplyr (>= 0.5.0),
+  ggplot2 (>= 2.2.1),
   randomForest (>= 4.6.12)
-Suggests: knitr, rmarkdown
+Suggests:
+  knitr,
+  rmarkdown
 VignetteBuilder: knitr
