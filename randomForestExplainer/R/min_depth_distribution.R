@@ -4,6 +4,7 @@
 #' @return The original data frame with an additional column \code{depth}
 #' @examples
 #' calculate_tree_depth(getTree(randomForest(Species ~ ., data = iris), k = 1, labelVar = T))
+#' @export
 calculate_tree_depth <- function(frame){
   if(!is.data.frame(frame)) stop("The object is not a data frame!")
   if(!all(c("right daughter", "left daughter") %in% names(frame))){
@@ -26,6 +27,7 @@ calculate_tree_depth <- function(frame){
 #' @return A data frame with the value of minimal depth for every variable in every tree
 #' @examples
 #' min_depth_distribution(randomForest(Species ~ ., data = iris))
+#' @export
 min_depth_distribution <- function(forest){
   if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
   forest_table <-
@@ -45,6 +47,7 @@ min_depth_distribution <- function(forest){
 #' @return A data frame with count of occurances of each minimal depth value including NA's
 #' @examples
 #' min_depth_count(min_depth_distribution(randomForest(Species ~ ., data = iris)))
+#' @export
 min_depth_count <- function(min_depth_frame){
   min_depth_count <- dplyr::group_by(min_depth_frame, variable, minimal_depth) %>%
     dplyr::summarize(count = n()) %>% as.data.frame()
@@ -66,6 +69,7 @@ min_depth_count <- function(min_depth_frame){
 #' @return A ggplot object
 #' @examples
 #' plot_min_depth_distribution(min_depth_distribution(randomForest(Species ~ ., data = iris)))
+#' @export
 plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees =
                                           round(0.5 * max(min_depth_count(min_depth_frame)[[2]]$no_of_occurances))){
   min_depth_count_list <- min_depth_count(min_depth_frame)
