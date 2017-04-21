@@ -11,6 +11,7 @@ Imports:
   data.table (>= 1.10.4),
   dplyr (>= 0.5.0),
   ggplot2 (>= 2.2.1),
+  ggrepel (>= 0.6.5),
   randomForest (>= 4.6.12)
 Suggests:
   knitr,

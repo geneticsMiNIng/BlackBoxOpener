@@ -61,35 +61,42 @@ min_depth_count <- function(min_depth_frame){
   return(list(min_depth_count, occurances))
 }
 
-#' Plot the distribution of minimal depth in a random forest
-#'
-#' @param min_depth_frame A data frame output of min_depth_distribution or min_depth_distribution_memory function
-#' @param k The maximal number of variables with highest mean minimal depth to be used for plotting
-#' @param min_no_of_trees The minimal number of trees in which a variable has to be used for splitting to be used for plotting
-#' @return A ggplot object
-#' @examples
-#' plot_min_depth_distribution(min_depth_distribution(randomForest(Species ~ ., data = iris)))
-#' @export
-plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees =
-                                          round(0.5 * max(min_depth_count(min_depth_frame)[[2]]$no_of_occurances))){
+# Get a data frame with minimal depth distribution, its mean and the number of occurances for a subset of variables
+get_min_depth_frame_with_means <- function(min_depth_frame, min_no_of_trees =
+                                         0.5 * max(min_depth_count(min_depth_frame)[[2]]$no_of_occurances)){
   min_depth_count_list <- min_depth_count(min_depth_frame)
-  min_depth_count_list[[1]][is.na(min_depth_count_list[[1]]$minimal_depth), "count"] <-
-    min_depth_count_list[[1]][is.na(min_depth_count_list[[1]]$minimal_depth), "count"] -
-    min(min_depth_count_list[[1]][is.na(min_depth_count_list[[1]]$minimal_depth), "count"])
   variables <- min_depth_count_list[[2]][min_depth_count_list[[2]]$no_of_occurances >= min_no_of_trees, "variable"]
   min_depth_frame <- min_depth_frame[min_depth_frame$variable %in% variables, ]
   min_depth_count_list[[1]] <- min_depth_count_list[[1]][min_depth_count_list[[1]]$variable %in% variables, ]
   min_depth_means <- aggregate(minimal_depth ~ variable, data = min_depth_frame, mean)
   colnames(min_depth_means)[2] <- "mean_minimal_depth"
   frame_with_means <- merge(min_depth_count_list[[1]], min_depth_means)
+  frame_with_means <- merge(frame_with_means, min_depth_count_list[[2]])
+  return(frame_with_means)
+}
+
+#' Plot the distribution of minimal depth in a random forest
+#'
+#' @param min_depth_frame A data frame output of min_depth_distribution function
+#' @param k The maximal number of variables with lowest mean minimal depth to be used for plotting
+#' @param min_no_of_trees The minimal number of trees in which a variable has to be used for splitting to be used for plotting
+#' @return A ggplot object
+#' @examples
+#' plot_min_depth_distribution(min_depth_distribution(randomForest(Species ~ ., data = iris)))
+#' @export
+plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees =
+                                          0.5 * max(min_depth_count(min_depth_frame)[[2]]$no_of_occurances)){
+  frame_with_means <- get_min_depth_frame_with_means(min_depth_frame, min_no_of_trees)
+  frame_with_means[is.na(frame_with_means$minimal_depth), "count"] <-
+    frame_with_means[is.na(frame_with_means$minimal_depth), "count"] -
+    min(frame_with_means[is.na(frame_with_means$minimal_depth), "count"])
   frame_with_means$mean_minimal_depth <- frame_with_means$mean_minimal_depth *
-    max(min_depth_count_list[[2]]$no_of_occurances) / max(min_depth_frame$minimal_depth, na.rm = TRUE)
-  frame_with_means$minimal_depth <- as.factor(frame_with_means$minimal_depth)
+    max(frame_with_means$no_of_occurances) / max(min_depth_frame$minimal_depth, na.rm = TRUE)
   frame_with_means <-
     within(frame_with_means, variable <-
-             factor(variable, levels = rev(min_depth_means[order(min_depth_means$mean_minimal_depth), "variable"])))
-  plot <- ggplot(frame_with_means[frame_with_means$variable %in% levels(frame_with_means$variable)[1:min(k, nrow(min_depth_count_list[[2]]))], ],
-                 aes(x = variable, y = count, fill = minimal_depth)) +
+             factor(variable, levels = rev(unique(frame_with_means[order(frame_with_means$mean_minimal_depth), "variable"]))))
+  plot <- ggplot(frame_with_means[frame_with_means$variable %in% levels(frame_with_means$variable)[1:min(k, length(unique(frame_with_means$variable)))], ],
+                 aes(x = variable, y = count, fill = as.factor(minimal_depth))) +
     geom_col(position = position_stack(reverse = TRUE)) + coord_flip() +
     geom_errorbar(aes(ymin = mean_minimal_depth, ymax = mean_minimal_depth), size = 1.5) +
     xlab("Variable") + ylab("Number of trees") + guides(fill = guide_legend(title = "Minimal depth")) +

@@ -43,33 +43,25 @@ rm(remove)
 GlioblastomaWide <- GlioblastomaWide[, -1]
 ```
 
-Now, I use the `randomForest` package to build a random forest for the data. I need the forest to have as many trees as possible, as with thousands of variables the probablility of each being considered for a split of a node is low and for analyzing the structure of the random forest I need a reasonable number of such instances for each variable, as I cannot say anything about the importance of a variable that was not even considered for a split.
+Now, I use the `randomForest` package to build a random forest for the data. I need the forest to have as many trees as possible, as with thousands of variables the probablility of each being considered for a split of a node is low and for analyzing the structure of the random forest I need a reasonable number of such instances for each variable, as I cannot say anything about the importance of a variable that was not even considered for a split. Moreover, we will analyze measures of importance of variables so we set `importance = TRUE`.
 
 As building of the below forest takes a long time I load it from the memory.
 
 ```{r}
-# forest <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000)
+# forest <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000, importance = TRUE)
 # save(forest, file = "GlioblastomaWide_forest.rda")
 load("GlioblastomaWide_forest.rda")
 ```
 
 [here we will check if the random forest is a reasonable predictor]
 
-# Minimal depth
+What follows is a demonstration of how the new package works using this forest as an example. It is worth noting, that I distinguish functions that produce data from the ones that plot it (I always use `ggplot2` for that). Also, bear in mind that this dataset is of a particular type (many more variables than observations) and all functions adress issues connected to that, by restricting the results to only some variables, etc., which may be redundant in a low-dimensional setting.
 
-## Distribution of minimal depth
+# Distribution of minimal depth
 
-At this point I will demonstrate new ways in which a random forest can be interpreted using the distribution of minimal depth across its trees. Below, I show how to use the four functions provided in the file min_depth_distribution.R to explore my random forest.
+First, I demonstrate new ways in which a random forest can be interpreted using the distribution of minimal depth across its trees. Below, I show how to use the two main functions provided in the file min_depth_distribution.R to explore my random forest.
 
-The most fundamental building block here is the function `calculate_tree_depth` that calculates the depth of each node for a single tree. As an argument, it takes the data frame produced by the `randomForest::getTree` function. I consider the first tree from our forest:
-
-```{r}
-frame <- getTree(forest, k = 1, labelVar = TRUE) # the argument labelVar has to be set to TRUE!
-head(frame) # this is how such frame looks like
-head(calculate_tree_depth(frame)) # this is what our function produces
-```
-
-The function `min_depth_distribution` builds upon the above result -- it creates one data frame for the whole forest and then for each tree calculates the minimal depth of all variables that were used for splitting within it. It takes the forest as its argument and returns a data frame with the distribution of minimal depth across trees.
+To analyze the distribution of minimal depth we first need to calculate it. This is what function `min_depth_distribution` does -- it creates one data frame for the whole forest (tracks trees with column `tree`) and then for each tree calculates the minimal depth of all variables that were used for splitting within it. It takes the forest as its argument and returns a data frame with the distribution of minimal depth across trees.
 
 ```{r}
 min_depth_frame <- min_depth_distribution(forest)
@@ -80,37 +72,86 @@ It is worth noting, that using this function we only get data concerning the min
 
 ```{r}
 # library(tidyr)
-# min_depth_frame <- tidyr::complete(min_depth_frame, tree = 1:forest$ntree, variable = labels(forest$terms))
+# min_depth_frame_complete <- tidyr::complete(min_depth_frame, tree = 1:forest$ntree, variable = labels(forest$terms))
 ```
 
-The function `min_depth_count` counts how many times each variable had each minimal depth in a tree. It also takes into account the instances when a variable did not appear as split variable in a tree (then `minimal_depth = NA`). It takes the result of `min_depth_distribution` as an argument and returns a list of two data frames presented below:
+To visualize the distribution of minimal depth across trees, the function `plot_min_depth_distribution` plots the minimal depth distribution for a maximum of `k` variables with highest mean minimal depth (default is 10). For this, only variables that were used for splitting in at least `min_no_of_trees` number of trees are used -- this argument is of particular interest in cases with many variables like in our example, as some variables may have a low mean minimal depth only due to chance (e.g., they were present only in one out of 10000 trees and there happend to be used to splitting close to the root). The default value for this parameter is half of the maximal number of trees in which any variable was used for splitting (in our case this is half of 94).
 
-```{r}
-min_depth_count_list <- min_depth_count(min_depth_frame)
-head(min_depth_count_list[[1]], n = 10)
-```
-
-The first data frame from the list (above) contains the count of occurances of each variable and minimal_depth combination.
-
-```{r}
-head(min_depth_count_list[[2]], n = 10)
-```
-
-The second data frame from the list (above) contains the number of trees in which each variable appeared as a splitting variable.
-
-Finally, the function `plot_min_depth_distribution` plots the minimal depth distribution for a maximum of `k` variables with highest mean minimal depth (default is 10). For this, only variables that were used for splitting in at least `min_no_of_trees` number of trees are used -- this argument is of particular interest in cases with many variables like in our example, as some variables may have a low mean minimal depth only due to chance (e.g., they were present only in one out of 10000 trees and there happend to be used to splitting close to the root). The default value for this parameter is half of the maximal number of trees in which any variable was used for splitting (in our case this is half of 94).
-
-```{r, fig.width = 6, fig.height = 6}
+```{r, fig.width = 7, fig.height = 5}
 plot_min_depth_distribution(min_depth_frame)
 ```
 
-The vertical bar indicates the mean minimal depth rescaled such that the maximal possible value is the maximal number of trees in which any variable was used for splitting (this is 94 in our case -- for variable SH3BP2). Note, that the number of NA's plotted is the number of NA's that a variable has on top of the minimal number of NA's.
+The vertical bar indicates the mean minimal depth rescaled such that the maximal possible value is the maximal number of trees in which any variable was used for splitting (this is 94 in our case -- for variable SH3BP2). Note, that the number of NA's plotted is the number of NA's that a variable has on top of the minimal number of NA's for any variable in the dataset.
 
 Below, we use the function again with different options:
 
-```{r, fig.width = 6, fig.height = 9}
+```{r, fig.width = 7, fig.height = 7}
 plot_min_depth_distribution(min_depth_frame, k = 15, min_no_of_trees = 50)
 ```
 
 Of course, the result is very sensitive to changes in parameters `k` and `min_no_of_trees`. This is because we have so many variables and their occurance as split variables is generally rare (less than 0.1%). That is just another argument for looking at the whole distribution of minimal depth instead of mean minimal depth, especially for such datasets as this one.
+
+# Multi-way importance plot
+
+The next step in understanding a random forest is to compare the performance of variables across different measures of importance. This idea is implemented in file measure_importance.
+
+First, the function `measure_importance` calculates all importance measures for our forest and returns them in a single data frame. This includes extracting measures implemented already by the `randomForest` package (mean decrease in accuracy and mean dearease in MSE for regression; mean decrease in accuracy for each class, for all classes and mean decrease in Gini index for classification) and calculating the following additional ones:
+
+- *mean minimal depth*
+
+- *number of nodes* in which a variale is used for splitting
+
+- *number of trees* in which a variable is used for splitting
+
+- *number of times the variable splits at node*
+
+- *significance of the variable* [not added yet].
+
+For our forest we get the following result:
+
+```{r}
+# importance_frame <- measure_importance(forest)
+# save(importance_frame, file = "GlioblastomaWide_importance_frame.rda")
+load("GlioblastomaWide_importance_frame.rda")
+head(importance_frame, n = 10)
+```
+
+The next step is to plot two or three of those measures against each other. This is done using the `multi_way_importance_plot` function, which takes the following arguments:
+
+- `importance_frame` -- the frame with importance measures,
+
+- `x_measure, y_measure, size_measure` -- importance measures to be presented as dimensions x, y and size of points of the scatter plot; in case the number of nodes or trees are chosen as either x or y measure, the square root scale is used,
+
+- `min_no_of_trees` -- the minimal number of trees in which a variable has to be used for splitting to be included in the plot; the default is 10% of the maximal number of trees in which a variable appears,
+
+- `x_label_prob, y_label_prob, size_label_prob` -- the fraction of top variables according to each dimension in which a variable has to be to be labeled on the plot (a variable needs to be within the top fraction for every measure to be labeled); the default is 0.01 for each,
+
+- `main` -- title of the plot; the default is "Multi-way importance plot".
+
+Below, we use the Multi-way importance plot to visualize our forest for four different sets of parameters:
+
+```{r, fig.width = 7, fig.height = 7}
+# Possible measures: "mean_minimal_depth", "no_of_nodes", "MeanDecreaseGini", "no_of_trees", "times_a_root"
+multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "no_of_trees", 
+                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
+multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "no_of_nodes", 
+                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
+```
+
+Note, that the above plots are almost identical -- that is because the number of nodes is in `r sum(importance_frame$no_of_trees == importance_frame$no_of_nodes)` out of `r nrow(importance_frame)` cases identical to the number of trees, as the trees in our forest are pretty short. This might not be the case for other datasets and either of the two measures might be preffered (they can also be compared using this plot).
+
+One could also consider the number of times the variable was used for splitting at the root or rearrange the dimensions and reduce the number of points plotted:
+
+```{r, fig.width = 7, fig.height = 7}
+multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "times_a_root", 
+                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
+multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "MeanDecreaseGini", 
+                          size_measure = "times_a_root", min_no_of_trees = 0.4*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
+```
+
+
 
