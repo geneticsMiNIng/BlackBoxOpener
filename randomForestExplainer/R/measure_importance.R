@@ -57,6 +57,8 @@ measure_importance <- function(forest){
 #' @param size_label_prob The fraction of best points according to the measure displayed by size of points to be labeled
 #' @param main A string to be used as title of the plot
 #' @return A ggplot object
+#' @import ggplot2
+#' @import ggrepel
 #' @examples
 #' multi_way_importance_plot(measure_importance(randomForest(Species ~ ., data = iris)))
 #' @export
