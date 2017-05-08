@@ -132,12 +132,12 @@ The next step is to plot two or three of those measures against each other. This
 Below, we use the Multi-way importance plot to visualize our forest for four different sets of parameters:
 
 ```{r, fig.width = 7, fig.height = 7}
-# Possible measures: "mean_minimal_depth", "no_of_nodes", "MeanDecreaseGini", "no_of_trees", "times_a_root"
+# Possible measures: "mean_minimal_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
 multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "no_of_trees", 
-                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          size_measure = "gini_decrease", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
 multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "no_of_nodes", 
-                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          size_measure = "accuracy_decrease", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
 ```
 
@@ -147,12 +147,73 @@ One could also consider the number of times the variable was used for splitting 
 
 ```{r, fig.width = 7, fig.height = 7}
 multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "times_a_root", 
-                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          size_measure = "gini_decrease", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
-multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "MeanDecreaseGini", 
+multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "gini_decrease", 
                           size_measure = "times_a_root", min_no_of_trees = 0.4*max(importance_frame$no_of_trees),
                           x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
 ```
+
+# Other examples
+
+## Multi-class classification: breast cancer data
+
+Download and process data:
+
+```{r}
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("DESeq")
+# biocLite("limma")
+# biocLite("TxDb.Hsapiens.UCSC.hg18.knownGene")
+# biocLite("org.Hs.eg.db")
+# biocLite("DESeq2")
+# biocLite("edgeR")
+# devtools::install_github("geneticsMiNIng/MLGenSig", subdir = "MetExpR")
+
+# brca <- MetExpR::BRCA_mRNAseq_chr17
+# colnames(brca) <- make.names(colnames(brca))
+# brca$SUBTYPE <- factor(brca$SUBTYPE)
+
+# save(brca, file = "BreastCancer.rda")
+load("BreastCancer.rda")
+```
+
+Build a forest:
+
+```{r}
+# set.seed(2017)
+# forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, importance = TRUE, localImp = TRUE)
+# save(forest_brca, file = "BreastCancer_forest.rda")
+load("BreastCancer_forest.rda")
+```
+
+## Regression: PISA data
+
+Download and process data:
+
+```{r}
+# devtools::install_github("pbiecek/PISA2012lite")
+# library("PISA2012lite")
+
+# pisa <- na.omit(student2012[,c(1, 4, 12, 13, 18:20, 39, 61:62, 114, 488, 457, 501)])
+# pisa <- pisa[pisa$CNT %in% c("Austria", "Belgium", "Czech Republic", "Germany", "Denmark", "Spain", "Estonia", "Finland", "France", "United Kingdom", "Greece", "Hungary", "Ireland", "Italy", "Lithuania", "Luxembourg", "Latvia", "Netherlands", "Poland", "Portugal", "Slovak Republic", "Slovenia", "Sweden", "Romania", "Croatia", "Bulgaria"),] # consider only EU countries to reduce the size
+# pisa <- pisa[pisa$CNT %in% c(), ] # only the Visegrad group to begin with
+# pisa$CNT <- factor(pisa$CNT)
+
+# save(pisa, file = "PISA.rda")
+load("PISA.rda")
+```
+
+Build a forest:
+
+```{r}
+# set.seed(2017)
+forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, importance = TRUE, localImp = TRUE)
+save(forest_pisa, file = "PISA_forest.rda")
+load("PISA_forest.rda")
+```
+
+
 
 
 

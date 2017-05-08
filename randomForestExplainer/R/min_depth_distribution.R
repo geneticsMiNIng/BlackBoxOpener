@@ -90,16 +90,24 @@ plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees
   frame_with_means[is.na(frame_with_means$minimal_depth), "count"] <-
     frame_with_means[is.na(frame_with_means$minimal_depth), "count"] -
     min(frame_with_means[is.na(frame_with_means$minimal_depth), "count"])
-  frame_with_means$mean_minimal_depth <- frame_with_means$mean_minimal_depth *
+  frame_with_means$mean_minimal_depth_rescaled <- frame_with_means$mean_minimal_depth *
     max(frame_with_means$no_of_occurances) / max(min_depth_frame$minimal_depth, na.rm = TRUE)
   frame_with_means <-
     within(frame_with_means, variable <-
-             factor(variable, levels = rev(unique(frame_with_means[order(frame_with_means$mean_minimal_depth), "variable"]))))
-  plot <- ggplot(frame_with_means[frame_with_means$variable %in% levels(frame_with_means$variable)[1:min(k, length(unique(frame_with_means$variable)))], ],
-                 aes(x = variable, y = count, fill = as.factor(minimal_depth))) +
-    geom_col(position = position_stack(reverse = TRUE)) + coord_flip() +
-    geom_errorbar(aes(ymin = mean_minimal_depth, ymax = mean_minimal_depth), size = 1.5) +
+             factor(variable, levels = unique(frame_with_means[order(frame_with_means$mean_minimal_depth), "variable"])))
+  data <- frame_with_means[frame_with_means$variable %in% levels(frame_with_means$variable)[
+    1:min(k, length(unique(frame_with_means$variable)))], ]
+  data$variable <- droplevels(data$variable)
+  data_for_labels <- unique(data[, c("variable", "mean_minimal_depth", "mean_minimal_depth_rescaled")])
+  data_for_labels[, c("mean_minimal_depth", "mean_minimal_depth_rescaled")] <-
+    round(data_for_labels[, c("mean_minimal_depth", "mean_minimal_depth_rescaled")], digits = 2)
+  plot <- ggplot(data, aes(x = variable, y = count)) +
+    geom_col(position = position_stack(reverse = TRUE), aes(fill = as.factor(minimal_depth))) + coord_flip() +
+    scale_x_discrete(limits = rev(levels(data$variable))) +
+    geom_errorbar(aes(ymin = mean_minimal_depth_rescaled, ymax = mean_minimal_depth_rescaled), size = 1.5) +
     xlab("Variable") + ylab("Number of trees") + guides(fill = guide_legend(title = "Minimal depth")) +
-    ggtitle("The distribution of minimal depth")
+    ggtitle("The distribution of minimal depth") +
+    geom_label(data = data_for_labels,
+              aes(y = mean_minimal_depth_rescaled, label = mean_minimal_depth))
   return(plot)
 }

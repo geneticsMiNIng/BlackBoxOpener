@@ -22,7 +22,13 @@ measure_importance <- function(forest){
   colnames(nodes_occurances) <- c("variable", "no_of_nodes")
   nodes_occurances <- as.data.frame(nodes_occurances[!is.na(nodes_occurances$variable),])
   nodes_occurances$variable <- as.character(nodes_occurances$variable)
-  vimp_frame <- as.data.frame(forest$importance)
+  if(forest$type == "classification"){
+    vimp_frame <- as.data.frame(forest$importance[, c("MeanDecreaseAccuracy", "MeanDecreaseGini")])
+    colnames(vimp_frame) <- c("accuracy_decrease", "gini_decrease")
+  } else if(forest$type =="regression"){
+    vimp_frame <- as.data.frame(forest$importance)
+    colnames(vimp_frame) <- c("mse_increase", "node_purity_increase")
+  }
   vimp_frame$variable <- rownames(vimp_frame)
   min_depth_count <- dplyr::group_by(min_depth_frame, variable, minimal_depth) %>%
     dplyr::summarize(count = n()) %>% as.data.frame()
@@ -60,33 +66,34 @@ measure_importance <- function(forest){
 #' @import ggplot2
 #' @import ggrepel
 #' @examples
-#' multi_way_importance_plot(measure_importance(randomForest(Species ~ ., data = iris)))
+#' plot_multi_way_importance(measure_importance(randomForest(Species ~ ., data = iris)))
 #' @export
-multi_way_importance_plot <- function(importance_frame, x_measure, y_measure, size_measure = NULL,
+plot_multi_way_importance <- function(importance_frame, x_measure = "mean_minimal_depth",
+                                      y_measure = "times_a_root", size_measure = NULL,
                                       min_no_of_trees = 0.1*max(importance_frame$no_of_trees),
                                       x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01,
                                       main = "Multi-way importance plot"){
   data <- importance_frame[importance_frame$no_of_trees > min_no_of_trees, ]
-  if(x_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root", "MeanDecreaseGini")){
-    x_label_prob_down <- 1 - x_label_prob
-    x_label_prob_up <- 1
-  } else {
+  if(x_measure == "mean_minimal_depth"){
     x_label_prob_down <- 0
     x_label_prob_up <- x_label_prob
-  }
-  if(y_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root", "MeanDecreaseGini")){
-    y_label_prob_down <- 1 - y_label_prob
-    y_label_prob_up <- 1
   } else {
+    x_label_prob_down <- 1 - x_label_prob
+    x_label_prob_up <- 1
+  }
+  if(y_measure == "mean_minimal_depth"){
     y_label_prob_down <- 0
     y_label_prob_up <- y_label_prob
-  }
-  if(size_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root", "MeanDecreaseGini")){
-    size_label_prob_down <- 1 - size_label_prob
-    size_label_prob_up <- 1
   } else {
+    y_label_prob_down <- 1 - y_label_prob
+    y_label_prob_up <- 1
+  }
+  if(size_measure == "mean_minimal_depth"){
     size_label_prob_down <- 0
     size_label_prob_up <- size_label_prob
+  } else {
+    size_label_prob_down <- 1 - size_label_prob
+    size_label_prob_up <- 1
   }
   data_for_labels <-
     importance_frame[importance_frame[[x_measure]] > quantile(importance_frame[[x_measure]], x_label_prob_down, na.rm = TRUE) &
@@ -103,6 +110,53 @@ multi_way_importance_plot <- function(importance_frame, x_measure, y_measure, si
   } else if(y_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root")){
     plot <- plot + scale_y_sqrt()
   }
+  if(!is.null(main)){
+    plot <- plot + ggtitle(main)
+  }
+  return(plot)
+}
+
+#' Plot selected measures of importance of variables in a forest using ggpairs
+#'
+#' @param importance_frame A result of using the function measure_importance() to a random forest
+#' @param measures A character vector specifying the measures of importance to be used
+#' @param main A string to be used as title of the plot
+#' @return A ggplot object
+#' @import ggplot2
+#' @import GGally
+#' @examples
+#' plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+#' @export
+plot_importance_ggpairs <- function(importance_frame, measures =
+                                      names(importance_frame)[c(2, 4, 5, 6)],
+                                    main = "Relations between measures of importance"){
+  plot <- ggpairs(importance_frame[, measures])
+  if(!is.null(main)){
+    plot <- plot + ggtitle(main)
+  }
+  return(plot)
+}
+
+#' Plot against each other rankings of variables according to various measures of importance
+#'
+#' @param importance_frame A result of using the function measure_importance() to a random forest
+#' @param measures A character vector specifying the measures of importance to be used
+#' @param main A string to be used as title of the plot
+#' @return A ggplot object
+#' @import ggplot2
+#' @import GGally
+#' @examples
+#' plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+#' @export
+plot_importance_rankings <- function(importance_frame, measures =
+                                       names(importance_frame)[c(2, 4, 5, 6)],
+                                     main = "Relations between rankings according to different measures"){
+  if_decreasing <- measures != "mean_minimal_depth"
+  rankings <- importance_frame[, c("variable", measures)]
+  for(i in 1:length(measures)){
+    rankings[order(rankings[[measures[i]]], decreasing = if_decreasing[i]), ][[measures[i]]] <- 1:nrow(rankings)
+  }
+  plot <- ggpairs(rankings[, measures])
   if(!is.null(main)){
     plot <- plot + ggtitle(main)
   }

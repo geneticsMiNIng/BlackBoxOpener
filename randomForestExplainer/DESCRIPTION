@@ -10,9 +10,11 @@ LazyData: true
 Imports:
   data.table (>= 1.10.4),
   dplyr (>= 0.5.0),
+  GGally (>=1.3.0),
   ggplot2 (>= 2.2.1),
   ggrepel (>= 0.6.5),
-  randomForest (>= 4.6.12)
+  randomForest (>= 4.6.12),
+  reshape2 (>= 1.4.2)
 Suggests:
   knitr,
   rmarkdown

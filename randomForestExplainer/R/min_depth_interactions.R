@@ -1,24 +1,26 @@
 # For a vactor of conditioning variables insert values of conditional depth to a data frame of proper structure
 conditional_depth <- function(frame, vars){
-  index <- as.data.table(frame)[, .I[which.min(depth)], by = `split var`]
+  index <- as.data.table(frame)[, .SD[which.min(depth), "number"], by = `split var`]
+  index <- index[!is.na(index$`split var`), ]
   if(any(index$`split var` %in% vars)){
     for(j in vars){
-      begin <- as.numeric(index[index$`split var` == j, "V1"])
+      begin <- as.numeric(index[index$`split var` == j, "number"])
       if(!is.na(begin)){
         df <- frame[begin:nrow(frame), setdiff(names(frame), setdiff(vars, j))]
         df[[j]][1] <- 0
         for(k in 2:nrow(df)){
-          if(length(df[df[, "left daughter"] == as.numeric(rownames(df[k,])) |
-                       df[, "right daughter"] == as.numeric(rownames(df[k,])), j]) != 0){
+          if(length(df[df[, "left daughter"] == as.numeric(df[k, "number"]) |
+                       df[, "right daughter"] == as.numeric(df[k, "number"]), j]) != 0){
             df[k, j] <-
-              df[df[, "left daughter"] == as.numeric(rownames(df[k,])) |
-                   df[, "right daughter"] == as.numeric(rownames(df[k,])), j] + 1
+              df[df[, "left daughter"] == as.numeric(df[k, "number"]) |
+                   df[, "right daughter"] == as.numeric(df[k, "number"]), j] + 1
           }
         }
         frame[begin:nrow(frame), setdiff(names(frame), setdiff(vars, j))] <- df
       }
     }
   }
+  frame[frame == 0] <- NA
   return(frame)
 }
 #' Get a data frame with values of minimal depth conditional on selected variables
@@ -27,13 +29,13 @@ conditional_depth <- function(frame, vars){
 #' @param vars A character vector with variables with respect to which conditional minimal depth will be calculated
 #' @return A data frame with the value of minimal depth conditional on variables from the supplied vector
 #' @examples
-#' min_depth_interactions(randomForest(Species ~ ., data = iris), vars = names(iris))
+#' min_depth_interactions_values(randomForest(Species ~ ., data = iris), vars = names(iris))
 #' @export
-min_depth_interactions <- function(forest, vars){
+min_depth_interactions_values <- function(forest, vars){
   if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
   interactions_frame <-
     lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
-             calculate_tree_depth() %>% cbind(tree = i)) %>% data.table::rbindlist() %>% as.data.frame()
+             calculate_tree_depth() %>% cbind(., tree = i, number = 1:nrow(.))) %>% data.table::rbindlist() %>% as.data.frame()
   interactions_frame[vars] <- as.numeric(NA)
   interactions_frame <-
     as.data.table(interactions_frame)[, conditional_depth(as.data.frame(.SD), vars), by = tree] %>% as.data.frame()
@@ -45,24 +47,58 @@ min_depth_interactions <- function(forest, vars){
   return(min_depth_interactions_frame)
 }
 
-#' Count the trees in which each variable had a given conditional minimal depth
+#' Calculate mean conditional minimal depth with respect to a vector of variables
 #'
 #' @param forest A randomForest object
 #' @param vars A character vector with variables with respect to which conditional minimal depth will be calculated
-#' @return A list with means of conditional minimal depth in the first element and the size of sample for each mean in the second element
+#' @return A data frame with each observarion giving the means of conditional minimal depth and the size of sample for a given interaction
 #' @examples
-#' min_depth_interactions_means(randomForest(Species ~ ., data = iris), vars = names(iris))
+#' min_depth_interactions(randomForest(Species ~ ., data = iris), vars = names(iris))
 #' @export
-min_depth_interactions_means <- function(forest, vars){
-  min_depth_interactions_frame <- min_depth_interactions(forest, vars)
-  min_depth_interactions_means <-
+min_depth_interactions <- function(forest, vars){
+  if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
+  min_depth_interactions_frame <- min_depth_interactions_values(forest, vars)
+  interactions_frame <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
     dplyr::summarize_each_(funs(mean(., na.rm = TRUE)), vars) %>% as.data.frame()
-  min_depth_interactions_means[is.na(as.matrix(min_depth_interactions_means))] <- NA
+  interactions_frame[is.na(as.matrix(interactions_frame))] <- NA
+  interactions_frame <- reshape2::melt(interactions_frame, id.vars = "variable")
+  colnames(interactions_frame)[2:3] <- c("root_variable", "mean_minimal_depth")
   occurances <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
     dplyr::summarize_each_(funs(sum(!is.na(.))), vars) %>% as.data.frame()
-  return(list(min_depth_interactions_means, occurances))
+  occurances <- reshape2::melt(occurances, id.vars = "variable")
+  colnames(occurances)[2:3] <- c("root_variable", "occurances")
+  interactions_frame <- merge(interactions_frame, occurances)
+  interactions_frame$interaction <- paste(interactions_frame$root_variable, interactions_frame$variable, sep = ":")
+  return(interactions_frame)
 }
 
-
+#' Plot the top mean conditional minimal depth
+#'
+#' @param interactions_frame A data frame produced by the min_depth_interactions_means() function
+#' @param k The number of best interactions to plot, if set to NULL then all plotted
+#' @param main A string to be used as title of the plot
+#' @return A ggplot2 object
+#' @import ggplot2
+#' @examples
+#' plot_min_depth_interactions(min_depth_interactions(randomForest(Species ~ ., data = iris), vars = names(iris)))
+#' @export
+plot_min_depth_interactions <- function(interactions_frame, k = 30,
+                                        main = paste0("Mean minimal depth for ",
+                                                      paste0(k, " most frequent interactions"))){
+  interactions_frame$interaction <- factor(interactions_frame$interaction, levels =
+                                             interactions_frame[
+                                               order(interactions_frame$occurances, decreasing = TRUE), "interaction"])
+  minimum <- min(interactions_frame$mean_minimal_depth, na.rm = TRUE)
+  if(is.null(k)) k <- length(levels(interactions_frame$interaction))
+  plot <- ggplot(interactions_frame[interactions_frame$interaction %in% levels(interactions_frame$interaction)[1:k], ],
+                 aes(x = interaction, y = mean_minimal_depth, fill = occurances)) +
+    geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_hline(aes(yintercept = minimum, linetype = "minimum"), color = "red", size = 1.5) +
+    scale_linetype_manual(name = NULL, values = 1)
+  if(!is.null(main)){
+    plot <- plot + ggtitle(main)
+  }
+  return(plot)
+}

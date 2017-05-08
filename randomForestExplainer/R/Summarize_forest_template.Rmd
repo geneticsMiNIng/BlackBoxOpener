@@ -1,0 +1,54 @@
+---
+title: "randomForestExplainer: a graphical summary of your random forest"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Prepare stats of the forest
+
+```{r, eval = FALSE}
+min_depth_frame <- min_depth_distribution(forest)
+importance_frame <- measure_importance(forest)
+vars <- as.character(importance_frame[
+  importance_frame[["mean_minimal_depth"]] < quantile(importance_frame[["mean_minimal_depth"]], 0.01, na.rm = TRUE) &
+    importance_frame[["no_of_trees"]] > quantile(importance_frame[["no_of_trees"]], 0.99, na.rm = TRUE), "variable"])
+interactions_frame <- min_depth_interactions(forest, vars)
+```
+
+## Distribution of minimal depth
+
+```{r}
+plot_min_depth_distribution(min_depth_frame)
+```
+
+## Multi-way importance plot
+
+```{r}
+if(forest$type == "regression"){
+  size_measure <- "mse_increase"
+} else {
+  size_measure <- "accuracy_decrease"
+}
+plot_multi_way_importance(importance_frame, size_measure = size_measure)
+```
+
+## Compare different measures of importance
+
+```{r}
+plot_importance_ggpairs(importance_frame)
+```
+
+## Compare different rankings of variables
+
+```{r}
+plot_importance_rankings(importance_frame)
+```
+
+## Interactions: conditional minimal depth
+
+```{r}
+plot_min_depth_interactions(interactions_frame)
+```
