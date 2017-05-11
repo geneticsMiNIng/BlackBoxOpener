@@ -4,14 +4,13 @@
 \alias{plot_min_depth_distribution}
 \title{Plot the distribution of minimal depth in a random forest}
 \usage{
-plot_min_depth_distribution(min_depth_frame, k = 10,
-  min_no_of_trees = round(0.5 *
-  max(min_depth_count(min_depth_frame)[[2]]$no_of_occurances)))
+plot_min_depth_distribution(min_depth_frame, k = 10, min_no_of_trees = 0.5 *
+  max(min_depth_count(min_depth_frame)[[2]]$no_of_occurances))
 }
 \arguments{
-\item{min_depth_frame}{A data frame output of min_depth_distribution or min_depth_distribution_memory function}
+\item{min_depth_frame}{A data frame output of min_depth_distribution function}
 
-\item{k}{The maximal number of variables with highest mean minimal depth to be used for plotting}
+\item{k}{The maximal number of variables with lowest mean minimal depth to be used for plotting}
 
 \item{min_no_of_trees}{The minimal number of trees in which a variable has to be used for splitting to be used for plotting}
 }

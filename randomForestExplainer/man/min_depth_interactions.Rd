@@ -2,7 +2,7 @@
 % Please edit documentation in R/min_depth_interactions.R
 \name{min_depth_interactions}
 \alias{min_depth_interactions}
-\title{Get a data frame with values of minimal depth conditional on selected variables}
+\title{Calculate mean conditional minimal depth with respect to a vector of variables}
 \usage{
 min_depth_interactions(forest, vars)
 }
@@ -12,10 +12,10 @@ min_depth_interactions(forest, vars)
 \item{vars}{A character vector with variables with respect to which conditional minimal depth will be calculated}
 }
 \value{
-A data frame with the value of minimal depth conditional on variables from the supplied vector
+A data frame with each observarion giving the means of conditional minimal depth and the size of sample for a given interaction
 }
 \description{
-Get a data frame with values of minimal depth conditional on selected variables
+Calculate mean conditional minimal depth with respect to a vector of variables
 }
 \examples{
 min_depth_interactions(randomForest(Species ~ ., data = iris), vars = names(iris))
