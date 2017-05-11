@@ -23,6 +23,7 @@ library(data.table)
 library(dplyr)
 library(ggplot2)
 library(randomForest)
+library(randomForestExplainer)
 ```
 
 # Data
@@ -48,6 +49,7 @@ Now, I use the `randomForest` package to build a random forest for the data. I n
 As building of the below forest takes a long time I load it from the memory.
 
 ```{r}
+# set.seed(2017)
 # forest <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000, importance = TRUE)
 # save(forest, file = "GlioblastomaWide_forest.rda")
 load("GlioblastomaWide_forest.rda")
@@ -91,11 +93,13 @@ plot_min_depth_distribution(min_depth_frame, k = 15, min_no_of_trees = 50)
 
 Of course, the result is very sensitive to changes in parameters `k` and `min_no_of_trees`. This is because we have so many variables and their occurance as split variables is generally rare (less than 0.1%). That is just another argument for looking at the whole distribution of minimal depth instead of mean minimal depth, especially for such datasets as this one.
 
-# Multi-way importance plot
+# Measures of importance of variables
 
 The next step in understanding a random forest is to compare the performance of variables across different measures of importance. This idea is implemented in file measure_importance.
 
-First, the function `measure_importance` calculates all importance measures for our forest and returns them in a single data frame. This includes extracting measures implemented already by the `randomForest` package (mean decrease in accuracy and mean dearease in MSE for regression; mean decrease in accuracy for each class, for all classes and mean decrease in Gini index for classification) and calculating the following additional ones:
+## Measure importance
+
+First, the function `measure_importance` calculates all importance measures for our forest and returns them in a single data frame. This includes extracting measures implemented already by the `randomForest` package (mean decrease in accuracy and mean dearease in MSE for regression; mean decrease in accuracy for  all classes and mean decrease in Gini index for classification) and calculating the following additional ones:
 
 - *mean minimal depth*
 
@@ -116,7 +120,9 @@ load("GlioblastomaWide_importance_frame.rda")
 head(importance_frame, n = 10)
 ```
 
-The next step is to plot two or three of those measures against each other. This is done using the `multi_way_importance_plot` function, which takes the following arguments:
+## Multi-way importance plot
+
+The next step is to plot two or three of those measures against each other. This is done using the `plot_multi_way_importance` function, which takes the following arguments:
 
 - `importance_frame` -- the frame with importance measures,
 
@@ -131,13 +137,17 @@ The next step is to plot two or three of those measures against each other. This
 Below, we use the Multi-way importance plot to visualize our forest for four different sets of parameters:
 
 ```{r, fig.width = 7, fig.height = 7}
-# Possible measures: "mean_minimal_depth", "no_of_nodes", "MeanDecreaseGini", "no_of_trees", "times_a_root"
-multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "no_of_trees", 
-                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
-multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "no_of_nodes", 
-                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
+# Possible measures for classification: "mean_minimal_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
+plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+                          y_measure = "no_of_trees", size_measure = "gini_decrease", 
+                          min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          main = "Multi-way importance plot")
+plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+                          y_measure = "no_of_nodes", size_measure = "accuracy_decrease", 
+                          min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          main = "Multi-way importance plot")
 ```
 
 Note, that the above plots are almost identical -- that is because the number of nodes is in `r sum(importance_frame$no_of_trees == importance_frame$no_of_nodes)` out of `r nrow(importance_frame)` cases identical to the number of trees, as the trees in our forest are pretty short. This might not be the case for other datasets and either of the two measures might be preffered (they can also be compared using this plot).
@@ -145,13 +155,156 @@ Note, that the above plots are almost identical -- that is because the number of
 One could also consider the number of times the variable was used for splitting at the root or rearrange the dimensions and reduce the number of points plotted:
 
 ```{r, fig.width = 7, fig.height = 7}
-multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "times_a_root", 
-                          size_measure = "MeanDecreaseGini", min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
-multi_way_importance_plot(importance_frame, x_measure = "mean_minimal_depth", y_measure = "MeanDecreaseGini", 
-                          size_measure = "times_a_root", min_no_of_trees = 0.4*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, main = "Multi-way importance plot")
+plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+                          y_measure = "times_a_root", size_measure = "gini_decrease", 
+                          min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          main = "Multi-way importance plot")
+plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+                          y_measure = "gini_decrease", size_measure = "times_a_root", 
+                          min_no_of_trees = 0.4*max(importance_frame$no_of_trees),
+                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          main = "Multi-way importance plot")
 ```
+
+## Compare measures using ggpairs
+
+One drawback of the muli-way importance plot is that it only shows three importance measures (and only the values of the ones shown on the axes can be precisely read from the plot), whereas we have a few more of them and it is never clear which ones are the most meaningful (this will also vary depending on the application).
+
+To show more measures and relations between them at a time the function `plot_importance_ggpairs` uses the `GGally::ggpairs` function to plot two-way scatterplots for selected measures (supplied in a character vector), the default uses the following four:
+
+```{r, fig.width = 7, fig.height = 6}
+plot_importance_ggpairs(importance_frame)
+```
+
+## Compare different rankings
+
+Another approach would be to rank the variables according to each of those measures and use the rankings for plotting. This helps identify the measures for which the rankings align. For this we use the `plot_importance_rankings` function:
+
+```{r, fig.width = 7, fig.height = 6}
+plot_importance_rankings(importance_frame)
+```
+
+As we can see, in applications with so many variables as here these kinds of plots tend to be pretty messy, but we can still identify the measures that produce similar rankings.
+
+# Variable interactions
+
+Up untill now we only analyzed single variables trying to get a sense of how important they are in a forest. A natural extension of that approach would be to consider interactions of variables. To do that, we need to pick a subset of variables with which we will interact the other ones (the trees in a forest have a hierarchical structure, so when we consider an interaction of two variables, one is used for splitting higher in the tree than the other, if at all). These should be variables somewhat important in the forest on their own so we use importance measures to select them:
+
+```{r}
+vars <- as.character(importance_frame[importance_frame[["mean_minimal_depth"]] < 
+                                        quantile(importance_frame[["mean_minimal_depth"]], 0.01, na.rm = TRUE) &
+                                        importance_frame[["no_of_trees"]] > 
+                                        quantile(importance_frame[["no_of_trees"]], 0.95, na.rm = TRUE), "variable"])
+```
+
+## Conditional minimal depth
+
+The easiest extension of what we already used to the case of interactions is measuring minimal depth as one can easily define conditional minimal depth of one variable with respect to the other. What we do is in each tree we find the maximal subtree with a root splitting on one of the selected variables and then calculate depths of other variables within that subtree to finally get mean minimal depth for each such interaction. This is calculated by the function `min_depth_interactions`, which usually takes a while:
+
+```{r}
+# interactions_frame <- min_depth_interactions(forest, vars)
+# save(interactions_frame, file = "BlackBoxOpener/randomForestExplainer/vignettes/GlioblastomaWide_interactions_frame.rda")
+load("GlioblastomaWide_interactions_frame.rda")
+```
+
+In our case the result looks like this:
+
+```{r}
+head(interactions_frame)
+```
+
+As we can suspect many interactions do not occur at all (we have a lot of variables and the trees are very short due to a small number of observations), so we should look at those that do:
+
+```{r}
+head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE), ])
+```
+
+The most frequent interaction in this forest occured only three times, which makes the analysis of interactions meaningless. Therefore, we build another random forest for our data with increased `mtry` parameter, which increases the chances of picking each variable for splitting at every node -- hopefully this will make meaningful interactions appear more frequently. We also select the conditioning variables based on the new importance measures table.
+
+```{r}
+# set.seed(2017)
+# forest_v2 <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000, mtry = floor(ncol(GlioblastomaWide)/3), importance = TRUE, localImp = TRUE)
+# save(forest_v2, file = "GlioblastomaWide_forest_v2.rda")
+load("GlioblastomaWide_forest_v2.rda")
+importance_frame <- measure_importance(forest_v2)
+vars <- as.character(importance_frame[importance_frame[["mean_minimal_depth"]] < 
+                                        quantile(importance_frame[["mean_minimal_depth"]], 0.01, na.rm = TRUE) &
+                                        importance_frame[["no_of_trees"]] > 
+                                        quantile(importance_frame[["no_of_trees"]], 0.95, na.rm = TRUE), "variable"])
+interactions_frame <- min_depth_interactions(forest_v2, vars)
+# save(interactions_frame, file = "GlioblastomaWide_interactions_frame_v2.rda")
+load("GlioblastomaWide_interactions_frame_v2.rda")
+head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE), ])
+```
+
+As we can see in the new forest the most frequent interaction occurs 29 times, so analyzing interactions starts to make sens and we can show the ones with lowest mean minimal depth on a plot using the  `interactions_frame` function, which compares the mean minimal depth of most frequent interaction to its minimal value among interactions:
+
+```{r, fig.width = 7, fig.height = 5}
+plot_min_depth_interactions(interactions_frame)
+```
+
+It is worth noting, that interaction analysis is not such a good idea for this particular dataset as we get short trees in the forest. However, it can be very important in applications with higher trees and that is why we include such examples in the end.
+
+# Other examples
+
+## Multi-class classification: breast cancer data
+
+Download and process data:
+
+```{r}
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("DESeq")
+# biocLite("limma")
+# biocLite("TxDb.Hsapiens.UCSC.hg18.knownGene")
+# biocLite("org.Hs.eg.db")
+# biocLite("DESeq2")
+# biocLite("edgeR")
+# devtools::install_github("geneticsMiNIng/MLGenSig", subdir = "MetExpR")
+
+# brca <- MetExpR::BRCA_mRNAseq_chr17
+# colnames(brca) <- make.names(colnames(brca))
+# brca$SUBTYPE <- factor(brca$SUBTYPE)
+
+# save(brca, file = "BreastCancer.rda")
+load("BreastCancer.rda")
+```
+
+Build a forest:
+
+```{r}
+# set.seed(2017)
+# forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, importance = TRUE, localImp = TRUE)
+# save(forest_brca, file = "BreastCancer_forest.rda")
+load("BreastCancer_forest.rda")
+```
+
+## Regression: PISA data
+
+Download and process data:
+
+```{r}
+# devtools::install_github("pbiecek/PISA2012lite")
+# library("PISA2012lite")
+
+# pisa <- na.omit(student2012[,c(1, 4, 12, 13, 18:20, 39, 61:62, 114, 488, 457, 501)])
+# pisa <- pisa[pisa$CNT %in% c("Austria", "Belgium", "Czech Republic", "Germany", "Denmark", "Spain", "Estonia", "Finland", "France", "United Kingdom", "Greece", "Hungary", "Ireland", "Italy", "Lithuania", "Luxembourg", "Latvia", "Netherlands", "Poland", "Portugal", "Slovak Republic", "Slovenia", "Sweden", "Romania", "Croatia", "Bulgaria"),] # consider only EU countries to reduce the size
+# pisa <- pisa[pisa$CNT %in% c(), ] # only the Visegrad group to begin with
+# pisa$CNT <- factor(pisa$CNT)
+
+# save(pisa, file = "PISA.rda")
+load("PISA.rda")
+```
+
+Build a forest:
+
+```{r}
+# set.seed(2017)
+# forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, importance = TRUE, localImp = TRUE)
+# save(forest_pisa, file = "PISA_forest.rda")
+load("PISA_forest.rda")
+```
+
 
 
 

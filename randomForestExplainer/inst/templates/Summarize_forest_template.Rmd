@@ -1,21 +1,27 @@
 ---
-title: "randomForestExplainer: a graphical summary of your random forest"
-output: html_document
+title: "A graphical summary of your random forest"
+author: "randomForestExplainer"
+date: `r as.character(format(Sys.Date(), format="%B %d, %Y"))`
+output: 
+    html_document:
+        toc: true
+        toc_float: true
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, echo = FALSEE)
 ```
 
-## Prepare stats of the forest
-
-```{r, eval = FALSE}
+```{r}
 min_depth_frame <- min_depth_distribution(forest)
 importance_frame <- measure_importance(forest)
-vars <- as.character(importance_frame[
-  importance_frame[["mean_minimal_depth"]] < quantile(importance_frame[["mean_minimal_depth"]], 0.01, na.rm = TRUE) &
-    importance_frame[["no_of_trees"]] > quantile(importance_frame[["no_of_trees"]], 0.99, na.rm = TRUE), "variable"])
-interactions_frame <- min_depth_interactions(forest, vars)
+# interactions_frame <- min_depth_interactions(forest, vars)
+```
+
+## Details of your forest
+
+```{r}
+forest
 ```
 
 ## Distribution of minimal depth
@@ -50,5 +56,5 @@ plot_importance_rankings(importance_frame)
 ## Interactions: conditional minimal depth
 
 ```{r}
-plot_min_depth_interactions(interactions_frame)
+# plot_min_depth_interactions(interactions_frame)
 ```
