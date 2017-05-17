@@ -1,4 +1,18 @@
-# For a vactor of conditioning variables insert values of conditional depth to a data frame of proper structure
+#' Calculate conditional depth in a tree
+#'
+#' For a vactor of conditioning variables insert values of conditional depth to a data frame of proper structure
+#'
+#' @param frame A data frame returned by the function calculate_tree_depth(getTree()) applied to a random forest
+#' @param vars A character vector with variables with respect to which conditional minimal depth will be calculated
+#'
+#' @return The original data frame with an additional column \code{depth}
+#'
+#' @import data.table
+#'
+#' @examples
+#' conditional_depth(calculate_tree_depth(getTree(randomForest(Species ~ ., data = iris), k = 1, labelVar = T)), vars = names(iris))
+#'
+#' @export
 conditional_depth <- function(frame, vars){
   index <- as.data.table(frame)[, .SD[which.min(depth), "number"], by = `split var`]
   index <- index[!is.na(index$`split var`), ]
@@ -31,6 +45,8 @@ conditional_depth <- function(frame, vars){
 #' @param vars A character vector with variables with respect to which conditional minimal depth will be calculated
 #'
 #' @return A data frame with the value of minimal depth conditional on variables from the supplied vector
+#'
+#' @import data.table
 #'
 #' @examples
 #' min_depth_interactions_values(randomForest(Species ~ ., data = iris), vars = names(iris))
