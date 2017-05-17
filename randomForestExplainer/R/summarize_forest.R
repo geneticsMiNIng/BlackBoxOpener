@@ -2,7 +2,7 @@
 #'
 #' Summarizes a random forest in a html document using plots created by randomForestExplainer
 #'
-#' @param forest A randomForest object created with the options importance = TRUE and localImp = TRUE
+#' @param forest A randomForest object created with the option localImp = TRUE
 #' @param vars A character vector with variables with respect to which interactions will be considered if NULL then they will be selected using the important_variables() function
 #' @param measures A character vector specifying the importance measures to be used for plotting ggpairs
 #' @param interactions Logical value: should variable interactions be considered (this may be time-consuming)
@@ -10,7 +10,7 @@
 #' @return A html document in your working directory
 #'
 #' @examples
-#' summarize_forest(randomForest(Species ~ ., data = iris, importance = TRUE, localImp = TRUE), vars = names(iris), interactions = TRUE)
+#' summarize_forest(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE), vars = names(iris), interactions = TRUE)
 #'
 #' @export
 summarize_forest <- function(forest, interactions = FALSE, vars = NULL,

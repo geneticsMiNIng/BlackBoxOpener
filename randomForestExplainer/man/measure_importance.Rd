@@ -7,7 +7,7 @@
 measure_importance(forest)
 }
 \arguments{
-\item{forest}{A random forest produced by the function randomForest with option importance = TRUE}
+\item{forest}{A random forest produced by the function randomForest with option localImp = TRUE}
 }
 \value{
 A data frame with rows corresponding to variables and columns to various measures of importance of variables
@@ -16,6 +16,6 @@ A data frame with rows corresponding to variables and columns to various measure
 Get a data frame with various measures of importance of variables in a random forest
 }
 \examples{
-measure_importance(randomForest(Species ~ ., data = iris))
+measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE))
 
 }

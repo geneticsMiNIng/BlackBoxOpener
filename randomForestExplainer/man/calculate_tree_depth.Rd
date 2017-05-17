@@ -16,6 +16,6 @@ The original data frame with an additional column \code{depth}
 Calculate the depth of each node in a tree
 }
 \examples{
-calculate_tree_depth(getTree(randomForest(Species ~ ., data = iris), k = 1, labelVar = T))
+calculate_tree_depth(randomForest::getTree(randomForest::randomForest(Species ~ ., data = iris), k = 1, labelVar = TRUE))
 
 }

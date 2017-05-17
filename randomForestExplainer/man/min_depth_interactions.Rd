@@ -18,6 +18,6 @@ A data frame with each observarion giving the means of conditional minimal depth
 Calculate mean conditional minimal depth with respect to a vector of variables
 }
 \examples{
-min_depth_interactions(randomForest(Species ~ ., data = iris), vars = names(iris))
+min_depth_interactions(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris))
 
 }

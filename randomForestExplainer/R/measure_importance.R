@@ -2,12 +2,14 @@
 #'
 #' Get a data frame with various measures of importance of variables in a random forest
 #'
-#' @param forest A random forest produced by the function randomForest with option importance = TRUE
+#' @param forest A random forest produced by the function randomForest with option localImp = TRUE
 #'
 #' @return A data frame with rows corresponding to variables and columns to various measures of importance of variables
 #'
+#' @import dplyr
+#'
 #' @examples
-#' measure_importance(randomForest(Species ~ ., data = iris))
+#' measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE))
 #'
 #' @export
 measure_importance <- function(forest){
@@ -60,20 +62,20 @@ measure_importance <- function(forest){
 #' Get the names of k variables with highest sum of rankings based on the specified importance measures
 #'
 #' @param importance_frame A result of using the function measure_importance() to a random forest
-#' @param measures
+#' @param measures A character vector specifying the measures of importance to be used
 #' @param k The number of variables to extract
 #' @param ties_action One of three: c("none", "all", "draw"); specifies which variables to pick when ties occur. When set to "none" we may get less than k variables, when "all" whe may get more and "draw" makes us get exactly k.
 #'
 #' @return A character vector with names of k variables with highest sum of rankings
 #'
 #' @examples
-#' important_variables(measure_importance(randomForest(Species ~ ., data = iris)))
+#' important_variables(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 #'
 #' @export
 important_variables <- function(importance_frame, k = 15, measures = names(importance_frame)[2:5],
                                 ties_action = "all"){
   rankings <- data.frame(variable = importance_frame$variable, mean_minimal_depth =
-                           frankv(importance_frame$mean_minimal_depth, ties.method = "dense"),
+                           data.table::frankv(importance_frame$mean_minimal_depth, ties.method = "dense"),
                          apply(importance_frame[, -c(1, 2)], 2,
                                function(x) frankv(x, order = -1, ties.method = "dense")))
   rankings$index <- rowSums(rankings[, measures])
@@ -111,7 +113,7 @@ important_variables <- function(importance_frame, k = 15, measures = names(impor
 #' @import ggrepel
 #'
 #' @examples
-#' plot_multi_way_importance(measure_importance(randomForest(Species ~ ., data = iris)))
+#' plot_multi_way_importance(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 #'
 #' @export
 plot_multi_way_importance <- function(importance_frame, x_measure = "mean_minimal_depth",
@@ -152,7 +154,7 @@ plot_multi_way_importance <- function(importance_frame, x_measure = "mean_minima
 #' @import GGally
 #'
 #' @examples
-#' plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+#' plot_importance_ggpairs(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 #'
 #' @export
 plot_importance_ggpairs <- function(importance_frame, measures =
@@ -179,7 +181,7 @@ plot_importance_ggpairs <- function(importance_frame, measures =
 #' @import GGally
 #'
 #' @examples
-#' plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+#' plot_importance_ggpairs(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 #'
 #' @export
 plot_importance_rankings <- function(importance_frame, measures =

@@ -31,6 +31,6 @@ A ggplot object
 Plot two or three measures of importance of variables in a random fores. Choose importance measures from the colnames(importance_frame).
 }
 \examples{
-plot_multi_way_importance(measure_importance(randomForest(Species ~ ., data = iris)))
+plot_multi_way_importance(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 
 }

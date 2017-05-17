@@ -18,6 +18,6 @@ A data frame with the value of minimal depth conditional on variables from the s
 Get a data frame with values of minimal depth conditional on selected variables
 }
 \examples{
-min_depth_interactions_values(randomForest(Species ~ ., data = iris), vars = names(iris))
+min_depth_interactions_values(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris))
 
 }

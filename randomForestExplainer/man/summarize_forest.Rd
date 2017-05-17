@@ -10,7 +10,7 @@ summarize_forest(forest, interactions = FALSE, vars = NULL, measures = if
   "mse_increase", "node_purity_increase", "no_of_nodes", "times_a_root"))
 }
 \arguments{
-\item{forest}{A randomForest object created with the options importance = TRUE and localImp = TRUE}
+\item{forest}{A randomForest object created with the option localImp = TRUE}
 
 \item{interactions}{Logical value: should variable interactions be considered (this may be time-consuming)}
 
@@ -25,6 +25,6 @@ A html document in your working directory
 Summarizes a random forest in a html document using plots created by randomForestExplainer
 }
 \examples{
-summarize_forest(randomForest(Species ~ ., data = iris, importance = TRUE, localImp = TRUE), vars = names(iris), interactions = TRUE)
+summarize_forest(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE), vars = names(iris), interactions = TRUE)
 
 }

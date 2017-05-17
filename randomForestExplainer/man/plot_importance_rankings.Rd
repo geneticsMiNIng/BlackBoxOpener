@@ -22,6 +22,6 @@ A ggplot object
 Plot against each other rankings of variables according to various measures of importance
 }
 \examples{
-plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+plot_importance_ggpairs(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 
 }

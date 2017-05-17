@@ -22,6 +22,6 @@ A ggplot object
 Plot selected measures of importance of variables in a forest using ggpairs
 }
 \examples{
-plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+plot_importance_ggpairs(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 
 }

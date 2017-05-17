@@ -16,5 +16,6 @@ A data frame with count of occurances of each minimal depth value including NA's
 Count the trees in which each variable had a given minimal depth
 }
 \examples{
-min_depth_count(min_depth_distribution(randomForest(Species ~ ., data = iris)))
+min_depth_count(min_depth_distribution(randomForest::randomForest(Species ~ ., data = iris)))
+
 }

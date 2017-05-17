@@ -21,5 +21,6 @@ A ggplot object
 Plot the distribution of minimal depth in a random forest
 }
 \examples{
-plot_min_depth_distribution(min_depth_distribution(randomForest(Species ~ ., data = iris)))
+plot_min_depth_distribution(min_depth_distribution(randomForest::randomForest(Species ~ ., data = iris)))
+
 }

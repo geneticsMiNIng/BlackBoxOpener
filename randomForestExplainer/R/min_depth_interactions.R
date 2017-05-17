@@ -10,7 +10,8 @@
 #' @import data.table
 #'
 #' @examples
-#' conditional_depth(calculate_tree_depth(getTree(randomForest(Species ~ ., data = iris), k = 1, labelVar = T)), vars = names(iris))
+#' tree_frame <- randomForest::getTree(randomForest::randomForest(Species ~ ., data = iris), k = 1, labelVar = TRUE)
+#' conditional_depth(calculate_tree_depth(cbind(tree_frame, number = 1:nrow(tree_frame))), vars = names(iris))
 #'
 #' @export
 conditional_depth <- function(frame, vars){
@@ -47,9 +48,10 @@ conditional_depth <- function(frame, vars){
 #' @return A data frame with the value of minimal depth conditional on variables from the supplied vector
 #'
 #' @import data.table
+#' @import dplyr
 #'
 #' @examples
-#' min_depth_interactions_values(randomForest(Species ~ ., data = iris), vars = names(iris))
+#' min_depth_interactions_values(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris))
 #'
 #' @export
 min_depth_interactions_values <- function(forest, vars){
@@ -78,8 +80,10 @@ min_depth_interactions_values <- function(forest, vars){
 #'
 #' @return A data frame with each observarion giving the means of conditional minimal depth and the size of sample for a given interaction
 #'
+#' @import dplyr
+#'
 #' @examples
-#' min_depth_interactions(randomForest(Species ~ ., data = iris), vars = names(iris))
+#' min_depth_interactions(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris))
 #'
 #' @export
 min_depth_interactions <- function(forest, vars){
@@ -109,7 +113,7 @@ min_depth_interactions <- function(forest, vars){
 #' @return A ggplot2 object
 #' @import ggplot2
 #' @examples
-#' plot_min_depth_interactions(min_depth_interactions(randomForest(Species ~ ., data = iris), vars = names(iris)))
+#' plot_min_depth_interactions(min_depth_interactions(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris)))
 #' @export
 plot_min_depth_interactions <- function(interactions_frame, k = 30,
                                         main = paste0("Mean minimal depth for ",

@@ -49,24 +49,24 @@ head(importance_frame, n = 10)
 plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
                           y_measure = "no_of_trees", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          no_of_labels = 10, 
                           main = "Multi-way importance plot")
 plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
                           y_measure = "no_of_nodes", size_measure = "accuracy_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          no_of_labels = 10, 
                           main = "Multi-way importance plot")
 
 ## ---- fig.width = 7, fig.height = 7--------------------------------------
 plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
                           y_measure = "times_a_root", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          no_of_labels = 10, 
                           main = "Multi-way importance plot")
 plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
                           y_measure = "gini_decrease", size_measure = "times_a_root", 
                           min_no_of_trees = 0.4*max(importance_frame$no_of_trees),
-                          x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01, 
+                          no_of_labels = 15, 
                           main = "Multi-way importance plot")
 
 ## ---- fig.width = 7, fig.height = 6--------------------------------------
@@ -76,14 +76,11 @@ plot_importance_ggpairs(importance_frame)
 plot_importance_rankings(importance_frame)
 
 ## ------------------------------------------------------------------------
-vars <- as.character(importance_frame[importance_frame[["mean_minimal_depth"]] < 
-                                        quantile(importance_frame[["mean_minimal_depth"]], 0.01, na.rm = TRUE) &
-                                        importance_frame[["no_of_trees"]] > 
-                                        quantile(importance_frame[["no_of_trees"]], 0.95, na.rm = TRUE), "variable"])
+vars <- important_variables(importance_frame, k = 20, measures = c("mean_minimal_depth", "no_of_trees"))
 
 ## ------------------------------------------------------------------------
 # interactions_frame <- min_depth_interactions(forest, vars)
-# save(interactions_frame, file = "BlackBoxOpener/randomForestExplainer/vignettes/GlioblastomaWide_interactions_frame.rda")
+# save(interactions_frame, file = "GlioblastomaWide_interactions_frame.rda")
 load("GlioblastomaWide_interactions_frame.rda")
 
 ## ------------------------------------------------------------------------
@@ -98,10 +95,7 @@ head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE),
 # save(forest_v2, file = "GlioblastomaWide_forest_v2.rda")
 load("GlioblastomaWide_forest_v2.rda")
 importance_frame <- measure_importance(forest_v2)
-vars <- as.character(importance_frame[importance_frame[["mean_minimal_depth"]] < 
-                                        quantile(importance_frame[["mean_minimal_depth"]], 0.01, na.rm = TRUE) &
-                                        importance_frame[["no_of_trees"]] > 
-                                        quantile(importance_frame[["no_of_trees"]], 0.95, na.rm = TRUE), "variable"])
+vars <- important_variables(importance_frame, k = 20, measures = c("mean_minimal_depth", "no_of_trees"))
 interactions_frame <- min_depth_interactions(forest_v2, vars)
 # save(interactions_frame, file = "GlioblastomaWide_interactions_frame_v2.rda")
 load("GlioblastomaWide_interactions_frame_v2.rda")

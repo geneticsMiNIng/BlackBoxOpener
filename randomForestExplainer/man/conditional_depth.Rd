@@ -18,6 +18,7 @@ The original data frame with an additional column \code{depth}
 For a vactor of conditioning variables insert values of conditional depth to a data frame of proper structure
 }
 \examples{
-conditional_depth(calculate_tree_depth(getTree(randomForest(Species ~ ., data = iris), k = 1, labelVar = T)), vars = names(iris))
+tree_frame <- randomForest::getTree(randomForest::randomForest(Species ~ ., data = iris), k = 1, labelVar = TRUE)
+conditional_depth(calculate_tree_depth(cbind(tree_frame, number = 1:nrow(tree_frame))), vars = names(iris))
 
 }

@@ -16,6 +16,6 @@ A data frame with the value of minimal depth for every variable in every tree
 Get minimal depth values for all trees in a random forest
 }
 \examples{
-min_depth_distribution(randomForest(Species ~ ., data = iris))
+min_depth_distribution(randomForest::randomForest(Species ~ ., data = iris))
 
 }
