@@ -2,12 +2,11 @@
 % Please edit documentation in R/measure_importance.R
 \name{plot_multi_way_importance}
 \alias{plot_multi_way_importance}
-\title{Plot two or three measures of importance of variables in a forest}
+\title{Multi-way importance plot}
 \usage{
 plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth",
   y_measure = "times_a_root", size_measure = NULL, min_no_of_trees = 0.1 *
-  max(importance_frame$no_of_trees), x_label_prob = 0.01,
-  y_label_prob = 0.01, size_label_prob = 0.01,
+  max(importance_frame$no_of_trees), no_of_labels = 10,
   main = "Multi-way importance plot")
 }
 \arguments{
@@ -21,11 +20,7 @@ plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth",
 
 \item{min_no_of_trees}{The minimal number of trees in which a variable has to be used for splitting to be used for plotting}
 
-\item{x_label_prob}{The fraction of best points according to the measure on X axis to be labeled}
-
-\item{y_label_prob}{The fraction of best points according to the measure on Y axis to be labeled}
-
-\item{size_label_prob}{The fraction of best points according to the measure displayed by size of points to be labeled}
+\item{no_of_labels}{The approximate number of best variables (according to all measures plotted) to be labeled (more will be labeled in case of ties)}
 
 \item{main}{A string to be used as title of the plot}
 }
@@ -33,8 +28,9 @@ plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth",
 A ggplot object
 }
 \description{
-Plot two or three measures of importance of variables in a forest
+Plot two or three measures of importance of variables in a random fores. Choose importance measures from the colnames(importance_frame).
 }
 \examples{
 plot_multi_way_importance(measure_importance(randomForest(Species ~ ., data = iris)))
+
 }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/measure_importance.R
 \name{plot_importance_rankings}
 \alias{plot_importance_rankings}
-\title{Plot against each other rankings of variables according to various measures of importance}
+\title{Plot importance measures rankings with ggpairs}
 \usage{
 plot_importance_rankings(importance_frame,
-  measures = names(importance_frame)[c(2, 4, 5, 6)],
+  measures = names(importance_frame)[c(2, 4, 5, 3, 7)],
   main = "Relations between rankings according to different measures")
 }
 \arguments{
@@ -23,4 +23,5 @@ Plot against each other rankings of variables according to various measures of i
 }
 \examples{
 plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/measure_importance.R
 \name{measure_importance}
 \alias{measure_importance}
-\title{Get a data frame with various measures of importance of variables in a forest}
+\title{Importance of variables in a random forest}
 \usage{
 measure_importance(forest)
 }
@@ -13,8 +13,9 @@ measure_importance(forest)
 A data frame with rows corresponding to variables and columns to various measures of importance of variables
 }
 \description{
-Get a data frame with various measures of importance of variables in a forest
+Get a data frame with various measures of importance of variables in a random forest
 }
 \examples{
 measure_importance(randomForest(Species ~ ., data = iris))
+
 }

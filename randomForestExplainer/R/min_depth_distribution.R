@@ -1,9 +1,14 @@
+#' Calculate depth in a tree
+#'
 #' Calculate the depth of each node in a tree
 #'
 #' @param frame A data frame returned by the function getTree() applied to a random forest
+#'
 #' @return The original data frame with an additional column \code{depth}
+#'
 #' @examples
 #' calculate_tree_depth(getTree(randomForest(Species ~ ., data = iris), k = 1, labelVar = T))
+#'
 #' @export
 calculate_tree_depth <- function(frame){
   if(!is.data.frame(frame)) stop("The object is not a data frame!")
@@ -21,12 +26,17 @@ calculate_tree_depth <- function(frame){
   return(frame)
 }
 
+#' Calculate minimal depth distribution of a random forest
+#'
 #' Get minimal depth values for all trees in a random forest
 #'
 #' @param forest A randomForest object
+#'
 #' @return A data frame with the value of minimal depth for every variable in every tree
+#'
 #' @examples
 #' min_depth_distribution(randomForest(Species ~ ., data = iris))
+#'
 #' @export
 min_depth_distribution <- function(forest){
   if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
@@ -106,7 +116,7 @@ plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees
     scale_x_discrete(limits = rev(levels(data$variable))) +
     geom_errorbar(aes(ymin = mean_minimal_depth_rescaled, ymax = mean_minimal_depth_rescaled), size = 1.5) +
     xlab("Variable") + ylab("Number of trees") + guides(fill = guide_legend(title = "Minimal depth")) +
-    ggtitle("The distribution of minimal depth") +
+    ggtitle("The distribution of minimal depth") + theme_bw() +
     geom_label(data = data_for_labels,
               aes(y = mean_minimal_depth_rescaled, label = mean_minimal_depth))
   return(plot)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/min_depth_distribution.R
 \name{calculate_tree_depth}
 \alias{calculate_tree_depth}
-\title{Calculate the depth of each node in a tree}
+\title{Calculate depth in a tree}
 \usage{
 calculate_tree_depth(frame)
 }
@@ -17,4 +17,5 @@ Calculate the depth of each node in a tree
 }
 \examples{
 calculate_tree_depth(getTree(randomForest(Species ~ ., data = iris), k = 1, labelVar = T))
+
 }

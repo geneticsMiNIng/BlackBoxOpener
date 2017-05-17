@@ -1,7 +1,9 @@
 ---
 title: "Understanding random forests with randomForestExplainer"
 author: "Ola Paluszyńska"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc_float: true
 vignette: >
   %\VignetteIndexEntry{Understanding random forests with randomForestExplainer}
   %\VignetteEngine{knitr::rmarkdown}

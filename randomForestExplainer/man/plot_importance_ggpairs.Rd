@@ -2,10 +2,10 @@
 % Please edit documentation in R/measure_importance.R
 \name{plot_importance_ggpairs}
 \alias{plot_importance_ggpairs}
-\title{Plot selected measures of importance of variables in a forest using ggpairs}
+\title{Plot importance measures with ggpairs}
 \usage{
 plot_importance_ggpairs(importance_frame,
-  measures = names(importance_frame)[c(2, 4, 5, 6)],
+  measures = names(importance_frame)[c(2, 4, 5, 3, 7)],
   main = "Relations between measures of importance")
 }
 \arguments{
@@ -23,4 +23,5 @@ Plot selected measures of importance of variables in a forest using ggpairs
 }
 \examples{
 plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+
 }

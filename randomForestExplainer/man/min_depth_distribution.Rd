@@ -2,7 +2,7 @@
 % Please edit documentation in R/min_depth_distribution.R
 \name{min_depth_distribution}
 \alias{min_depth_distribution}
-\title{Get minimal depth values for all trees in a random forest}
+\title{Calculate minimal depth distribution of a random forest}
 \usage{
 min_depth_distribution(forest)
 }
@@ -17,4 +17,5 @@ Get minimal depth values for all trees in a random forest
 }
 \examples{
 min_depth_distribution(randomForest(Species ~ ., data = iris))
+
 }

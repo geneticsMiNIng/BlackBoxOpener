@@ -1,9 +1,14 @@
-#' Get a data frame with various measures of importance of variables in a forest
+#' Importance of variables in a random forest
+#'
+#' Get a data frame with various measures of importance of variables in a random forest
 #'
 #' @param forest A random forest produced by the function randomForest with option importance = TRUE
+#'
 #' @return A data frame with rows corresponding to variables and columns to various measures of importance of variables
+#'
 #' @examples
 #' measure_importance(randomForest(Species ~ ., data = iris))
+#'
 #' @export
 measure_importance <- function(forest){
   forest_table <-
@@ -50,61 +55,79 @@ measure_importance <- function(forest){
   return(importance_frame)
 }
 
+#' Extract k most important variables in a random forest
+#'
+#' Get the names of k variables with highest sum of rankings based on the specified importance measures
+#'
+#' @param importance_frame A result of using the function measure_importance() to a random forest
+#' @param measures
+#' @param k The number of variables to extract
+#' @param ties_action One of three: c("none", "all", "draw"); specifies which variables to pick when ties occur. When set to "none" we may get less than k variables, when "all" whe may get more and "draw" makes us get exactly k.
+#'
+#' @return A character vector with names of k variables with highest sum of rankings
+#'
+#' @examples
+#' important_variables(measure_importance(randomForest(Species ~ ., data = iris)))
+#'
+#' @export
+important_variables <- function(importance_frame, k = 15, measures = names(importance_frame)[2:5],
+                                ties_action = "all"){
+  rankings <- data.frame(variable = importance_frame$variable, mean_minimal_depth =
+                           frankv(importance_frame$mean_minimal_depth, ties.method = "dense"),
+                         apply(importance_frame[, -c(1, 2)], 2,
+                               function(x) frankv(x, order = -1, ties.method = "dense")))
+  rankings$index <- rowSums(rankings[, measures])
+  vars <- as.character(rankings[order(rankings$index), "variable"])[1:min(k, nrow(rankings))]
+  if(length(rankings[rankings$index == rankings[rankings$variable == vars[length(vars)], "index"], "index"]) > 1 &
+     length(rankings[rankings$index <= rankings[rankings$variable == vars[length(vars)], "index"], "variable"]) > k){
+    draw <- rankings[rankings$index == rankings[rankings$variable == vars[length(vars)], "index"], ]
+    if(ties_action == "none"){
+      vars <- as.character(rankings[rankings$index < draw$index[1], "variable"])
+    } else if(ties_action == "all"){
+      vars <- as.character(rankings[rankings$index <= draw$index[1], "variable"])
+    } else if(ties_action == "draw"){
+      vars <- as.character(rankings[rankings$index < draw$index[1], "variable"])
+      vars <- c(vars, sample(as.character(draw$variable), size = k - length(vars)))
+    }
+  }
+  return(vars)
+}
 
-#' Plot two or three measures of importance of variables in a forest
+#' Multi-way importance plot
+#'
+#' Plot two or three measures of importance of variables in a random fores. Choose importance measures from the colnames(importance_frame).
 #'
 #' @param importance_frame A result of using the function measure_importance() to a random forest
 #' @param x_measure The measure of importance to be shown on the X axis
 #' @param y_measure The measure of importance to be shown on the Y axis
 #' @param size_measure The measure of importance to be shown as size of points (optional)
 #' @param min_no_of_trees The minimal number of trees in which a variable has to be used for splitting to be used for plotting
-#' @param x_label_prob The fraction of best points according to the measure on X axis to be labeled
-#' @param y_label_prob The fraction of best points according to the measure on Y axis to be labeled
-#' @param size_label_prob The fraction of best points according to the measure displayed by size of points to be labeled
+#' @param no_of_labels The approximate number of best variables (according to all measures plotted) to be labeled (more will be labeled in case of ties)
 #' @param main A string to be used as title of the plot
+#'
 #' @return A ggplot object
+#'
 #' @import ggplot2
 #' @import ggrepel
+#'
 #' @examples
 #' plot_multi_way_importance(measure_importance(randomForest(Species ~ ., data = iris)))
+#'
 #' @export
 plot_multi_way_importance <- function(importance_frame, x_measure = "mean_minimal_depth",
                                       y_measure = "times_a_root", size_measure = NULL,
                                       min_no_of_trees = 0.1*max(importance_frame$no_of_trees),
-                                      x_label_prob = 0.01, y_label_prob = 0.01, size_label_prob = 0.01,
+                                      no_of_labels = 10,
                                       main = "Multi-way importance plot"){
   data <- importance_frame[importance_frame$no_of_trees > min_no_of_trees, ]
-  if(x_measure == "mean_minimal_depth"){
-    x_label_prob_down <- 0
-    x_label_prob_up <- x_label_prob
-  } else {
-    x_label_prob_down <- 1 - x_label_prob
-    x_label_prob_up <- 1
-  }
-  if(y_measure == "mean_minimal_depth"){
-    y_label_prob_down <- 0
-    y_label_prob_up <- y_label_prob
-  } else {
-    y_label_prob_down <- 1 - y_label_prob
-    y_label_prob_up <- 1
-  }
-  if(size_measure == "mean_minimal_depth"){
-    size_label_prob_down <- 0
-    size_label_prob_up <- size_label_prob
-  } else {
-    size_label_prob_down <- 1 - size_label_prob
-    size_label_prob_up <- 1
-  }
-  data_for_labels <-
-    importance_frame[importance_frame[[x_measure]] > quantile(importance_frame[[x_measure]], x_label_prob_down, na.rm = TRUE) &
-                       importance_frame[[x_measure]] < quantile(importance_frame[[x_measure]], x_label_prob_up, na.rm = TRUE) &
-                       importance_frame[[y_measure]] > quantile(importance_frame[[y_measure]], y_label_prob_down, na.rm = TRUE) &
-                       importance_frame[[y_measure]] < quantile(importance_frame[[y_measure]], y_label_prob_up, na.rm = TRUE) &
-                       importance_frame[[size_measure]] > quantile(importance_frame[[size_measure]], size_label_prob_down, na.rm = TRUE) &
-                       importance_frame[[size_measure]] < quantile(importance_frame[[size_measure]], size_label_prob_up, na.rm = TRUE), ]
-  plot <- ggplot(data, aes_string(x = x_measure, y = y_measure, size = size_measure)) + geom_point() +
-    geom_label_repel(data = data_for_labels, aes(label = variable)) +
-    geom_point(data = data_for_labels, color = "blue")
+  data_for_labels <- importance_frame[importance_frame$variable %in%
+                                        important_variables(importance_frame, k = no_of_labels,
+                                                            measures = c(x_measure, y_measure, size_measure)), ]
+  plot <- ggplot(data, aes_string(x = x_measure, y = y_measure, size = size_measure)) +
+    geom_point(aes(colour = "black")) + geom_point(data = data_for_labels, aes(colour = "blue")) +
+    geom_label_repel(data = data_for_labels, aes(label = variable, size = NULL), show.legend = FALSE) +
+    scale_colour_manual(name = "variable", values = c("black", "blue"), labels = c("non-top", "top")) +
+    theme_bw()
   if(x_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root")){
     plot <- plot + scale_x_sqrt()
   } else if(y_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root")){
@@ -116,47 +139,57 @@ plot_multi_way_importance <- function(importance_frame, x_measure = "mean_minima
   return(plot)
 }
 
+#' Plot importance measures with ggpairs
+#'
 #' Plot selected measures of importance of variables in a forest using ggpairs
 #'
 #' @param importance_frame A result of using the function measure_importance() to a random forest
 #' @param measures A character vector specifying the measures of importance to be used
 #' @param main A string to be used as title of the plot
 #' @return A ggplot object
+#'
 #' @import ggplot2
 #' @import GGally
+#'
 #' @examples
 #' plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+#'
 #' @export
 plot_importance_ggpairs <- function(importance_frame, measures =
-                                      names(importance_frame)[c(2, 4, 5, 6)],
+                                      names(importance_frame)[c(2, 4, 5, 3, 7)],
                                     main = "Relations between measures of importance"){
-  plot <- ggpairs(importance_frame[, measures])
+  plot <- ggpairs(importance_frame[, measures]) + theme_bw()
   if(!is.null(main)){
     plot <- plot + ggtitle(main)
   }
   return(plot)
 }
 
+#' Plot importance measures rankings with ggpairs
+#'
 #' Plot against each other rankings of variables according to various measures of importance
 #'
 #' @param importance_frame A result of using the function measure_importance() to a random forest
 #' @param measures A character vector specifying the measures of importance to be used
 #' @param main A string to be used as title of the plot
+#'
 #' @return A ggplot object
+#'
 #' @import ggplot2
 #' @import GGally
+#'
 #' @examples
 #' plot_importance_ggpairs(measure_importance(randomForest(Species ~ ., data = iris)))
+#'
 #' @export
 plot_importance_rankings <- function(importance_frame, measures =
-                                       names(importance_frame)[c(2, 4, 5, 6)],
+                                       names(importance_frame)[c(2, 4, 5, 3, 7)],
                                      main = "Relations between rankings according to different measures"){
-  if_decreasing <- measures != "mean_minimal_depth"
-  rankings <- importance_frame[, c("variable", measures)]
-  for(i in 1:length(measures)){
-    rankings[order(rankings[[measures[i]]], decreasing = if_decreasing[i]), ][[measures[i]]] <- 1:nrow(rankings)
-  }
-  plot <- ggpairs(rankings[, measures])
+  rankings <- data.frame(variable = importance_frame$variable, mean_minimal_depth =
+                           frankv(importance_frame$mean_minimal_depth, ties.method = "dense"),
+                         apply(importance_frame[, -c(1, 2)], 2,
+                               function(x) frankv(x, order = -1, ties.method = "dense")))
+  plot <- ggpairs(rankings[, measures]) + theme_bw()
   if(!is.null(main)){
     plot <- plot + ggtitle(main)
   }
