@@ -2,7 +2,8 @@
 title: "Understanding random forests with randomForestExplainer"
 author: "Ola Paluszyńska"
 output: 
-  rmarkdown::html_vignette:
+  rmarkdown::html_document:
+    toc: true
     toc_float: true
 vignette: >
   %\VignetteIndexEntry{Understanding random forests with randomForestExplainer}
@@ -254,27 +255,28 @@ The `summarize_forest()` function is the flagship function of the `randomForestE
 
 To explore the importance of variables using all functionality of `randomForestExplainer` we just need to run the following:
 
-```{r}
+```{r, eval = FALSE}
 summarize_forest(forest, interactions = TRUE)
 ```
 
-Now, in the working directory a file "Summary_of_your_forest.html" appears and it looks like this: 
+Now, in the working directory a file "Summary_of_your_forest.html" appears and it looks like this:
+[Glioblastoma forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Glioblastoma_summary.html)
 
 ## Glioblastoma forest with increased mtry
 
 We repeat this for the second version of our forest:
 
-```{r}
+```{r, eval = FALSE}
 summarize_forest(forest_v2, interactions = TRUE)
 ```
 
-The summary:
+[Glioblastoma forest version 2 summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Glioblastoma_summary_v2.html)
 
 ## Multi-class classification: breast cancer data
 
 We use the breast cancer data as an example of application of random forests to multi-class classification problems. To download and process the data we execute we executed the following code:
 
-```{r}
+```{r, eval = FALSE}
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("DESeq")
 # biocLite("limma")
@@ -294,7 +296,7 @@ load("BreastCancer.rda")
 
 Now, we build the random forest with an increased number of trees due to a big number of variables. As this takes a while we retrieve the result from memory and summarize it:
 
-```{r}
+```{r, eval = FALSE}
 # set.seed(2017)
 # forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, localImp = TRUE)
 # save(forest_brca, file = "BreastCancer_forest.rda")
@@ -302,13 +304,13 @@ load("BreastCancer_forest.rda")
 summarize_forest(forest_brca, interactions = TRUE)
 ```
 
-The summary:
+[Breast cancer summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/BreastCancer_summary.html)
 
 ## Regression: PISA data
 
 The same works for the PISA 2015 dataset, for which we consider regression. To download and process the data we executed the following code:
 
-```{r}
+```{r, eval = FALSE}
 # devtools::install_github("pbiecek/PISA2012lite")
 # library("PISA2012lite")
 
@@ -323,7 +325,7 @@ load("PISA.rda")
 
 We build a forest and summarize it:
 
-```{r}
+```{r, eval = FALSE}
 # set.seed(2017)
 # forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, localImp = TRUE)
 # save(forest_pisa, file = "PISA_forest.rda")
@@ -331,13 +333,13 @@ load("PISA_forest.rda")
 summarize_forest(forest_pisa, interactions = TRUE)
 ```
 
-The summary: [to trochę trwa]
+[PISA forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/PISA_summary.html)
 
 ## Regression: Boston data
 
 To easily compare the results of using `randomForestExplainer` to the ones obtained by `ggRandomForests`, another package dealing with random forest visualisation, we also consider the regression example for the `Boston` dataset from package `MASS`, which was used in the package vignette for `ggRandomForests`. We do that with the following code:
 
-```{r}
+```{r, eval = FALSE}
 # data(Boston, package = "MASS")
 # Boston$chas <- as.logical(Boston$chas)
 # set.seed(2017)
@@ -347,6 +349,6 @@ load("Boston_forest.rda")
 summarize_forest(forest_Boston, interactions = TRUE)
 ```
 
-The summary: 
+[Boston forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Boston_summary.html)
 
 

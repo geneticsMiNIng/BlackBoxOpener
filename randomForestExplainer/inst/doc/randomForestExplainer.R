@@ -104,44 +104,61 @@ head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE),
 ## ---- fig.width = 7, fig.height = 5--------------------------------------
 plot_min_depth_interactions(interactions_frame)
 
-## ------------------------------------------------------------------------
-# source("https://bioconductor.org/biocLite.R")
-# biocLite("DESeq")
-# biocLite("limma")
-# biocLite("TxDb.Hsapiens.UCSC.hg18.knownGene")
-# biocLite("org.Hs.eg.db")
-# biocLite("DESeq2")
-# biocLite("edgeR")
-# devtools::install_github("geneticsMiNIng/MLGenSig", subdir = "MetExpR")
+## ---- eval = FALSE-------------------------------------------------------
+#  summarize_forest(forest, interactions = TRUE)
 
-# brca <- MetExpR::BRCA_mRNAseq_chr17
-# colnames(brca) <- make.names(colnames(brca))
-# brca$SUBTYPE <- factor(brca$SUBTYPE)
+## ---- eval = FALSE-------------------------------------------------------
+#  summarize_forest(forest_v2, interactions = TRUE)
 
-# save(brca, file = "BreastCancer.rda")
-load("BreastCancer.rda")
+## ---- eval = FALSE-------------------------------------------------------
+#  # source("https://bioconductor.org/biocLite.R")
+#  # biocLite("DESeq")
+#  # biocLite("limma")
+#  # biocLite("TxDb.Hsapiens.UCSC.hg18.knownGene")
+#  # biocLite("org.Hs.eg.db")
+#  # biocLite("DESeq2")
+#  # biocLite("edgeR")
+#  # devtools::install_github("geneticsMiNIng/MLGenSig", subdir = "MetExpR")
+#  
+#  # brca <- MetExpR::BRCA_mRNAseq_chr17
+#  # colnames(brca) <- make.names(colnames(brca))
+#  # brca$SUBTYPE <- factor(brca$SUBTYPE)
+#  
+#  # save(brca, file = "BreastCancer.rda")
+#  load("BreastCancer.rda")
 
-## ------------------------------------------------------------------------
-# set.seed(2017)
-# forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, importance = TRUE, localImp = TRUE)
-# save(forest_brca, file = "BreastCancer_forest.rda")
-load("BreastCancer_forest.rda")
+## ---- eval = FALSE-------------------------------------------------------
+#  # set.seed(2017)
+#  # forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, localImp = TRUE)
+#  # save(forest_brca, file = "BreastCancer_forest.rda")
+#  load("BreastCancer_forest.rda")
+#  summarize_forest(forest_brca, interactions = TRUE)
 
-## ------------------------------------------------------------------------
-# devtools::install_github("pbiecek/PISA2012lite")
-# library("PISA2012lite")
+## ---- eval = FALSE-------------------------------------------------------
+#  # devtools::install_github("pbiecek/PISA2012lite")
+#  # library("PISA2012lite")
+#  
+#  # pisa <- na.omit(student2012[,c(1, 4, 12, 13, 18:20, 39, 61:62, 114, 488, 457, 501)])
+#  # pisa <- pisa[pisa$CNT %in% c("Austria", "Belgium", "Czech Republic", "Germany", "Denmark", "Spain", "Estonia", "Finland", "France", "United Kingdom", "Greece", "Hungary", "Ireland", "Italy", "Lithuania", "Luxembourg", "Latvia", "Netherlands", "Poland", "Portugal", "Slovak Republic", "Slovenia", "Sweden", "Romania", "Croatia", "Bulgaria"),] # consider only EU countries to reduce the size
+#  # pisa <- pisa[pisa$CNT %in% c(), ] # only the Visegrad group to begin with
+#  # pisa$CNT <- factor(pisa$CNT)
+#  
+#  # save(pisa, file = "PISA.rda")
+#  load("PISA.rda")
 
-# pisa <- na.omit(student2012[,c(1, 4, 12, 13, 18:20, 39, 61:62, 114, 488, 457, 501)])
-# pisa <- pisa[pisa$CNT %in% c("Austria", "Belgium", "Czech Republic", "Germany", "Denmark", "Spain", "Estonia", "Finland", "France", "United Kingdom", "Greece", "Hungary", "Ireland", "Italy", "Lithuania", "Luxembourg", "Latvia", "Netherlands", "Poland", "Portugal", "Slovak Republic", "Slovenia", "Sweden", "Romania", "Croatia", "Bulgaria"),] # consider only EU countries to reduce the size
-# pisa <- pisa[pisa$CNT %in% c(), ] # only the Visegrad group to begin with
-# pisa$CNT <- factor(pisa$CNT)
+## ---- eval = FALSE-------------------------------------------------------
+#  # set.seed(2017)
+#  # forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, localImp = TRUE)
+#  # save(forest_pisa, file = "PISA_forest.rda")
+#  load("PISA_forest.rda")
+#  summarize_forest(forest_pisa, interactions = TRUE)
 
-# save(pisa, file = "PISA.rda")
-load("PISA.rda")
-
-## ------------------------------------------------------------------------
-# set.seed(2017)
-# forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, importance = TRUE, localImp = TRUE)
-# save(forest_pisa, file = "PISA_forest.rda")
-load("PISA_forest.rda")
+## ---- eval = FALSE-------------------------------------------------------
+#  # data(Boston, package = "MASS")
+#  # Boston$chas <- as.logical(Boston$chas)
+#  # set.seed(2017)
+#  # forest_Boston <- randomForest(medv ~ ., data = Boston, ntree = 1000, localImp = TRUE)
+#  # save(forest_Boston, file = "Boston_forest.rda")
+#  load("Boston_forest.rda")
+#  summarize_forest(forest_Boston, interactions = TRUE)
 

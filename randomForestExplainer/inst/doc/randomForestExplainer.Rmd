@@ -2,7 +2,8 @@
 title: "Understanding random forests with randomForestExplainer"
 author: "Ola Paluszyńska"
 output: 
-  rmarkdown::html_vignette:
+  rmarkdown::html_document:
+    toc: true
     toc_float: true
 vignette: >
   %\VignetteIndexEntry{Understanding random forests with randomForestExplainer}
@@ -199,6 +200,8 @@ vars <- important_variables(importance_frame, k = 20, measures = c("mean_minimal
 
 ## Conditional minimal depth
 
+### Example: our forest
+
 The easiest extension of what we already used to the case of interactions is measuring minimal depth as one can easily define conditional minimal depth of one variable with respect to the other. What we do is in each tree we find the maximal subtree with a root splitting on one of the selected variables and then calculate depths of other variables within that subtree to finally get mean minimal depth for each such interaction. This is calculated by the function `min_depth_interactions`, which usually takes a while:
 
 ```{r}
@@ -221,6 +224,8 @@ head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE),
 
 The most frequent interaction in this forest occured only three times, which makes the analysis of interactions meaningless. Therefore, we build another random forest for our data with increased `mtry` parameter, which increases the chances of picking each variable for splitting at every node -- hopefully this will make meaningful interactions appear more frequently. We also select the conditioning variables based on the new importance measures table.
 
+### Example: a forest with higher mtry
+
 ```{r}
 # set.seed(2017)
 # forest_v2 <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000, mtry = floor(ncol(GlioblastomaWide)/3), importance = TRUE, localImp = TRUE)
@@ -242,13 +247,36 @@ plot_min_depth_interactions(interactions_frame)
 
 It is worth noting, that interaction analysis is not such a good idea for this particular dataset as we get short trees in the forest. However, it can be very important in applications with higher trees and that is why we include such examples in the end.
 
-# Other examples
+# Summarize forest
+
+The `summarize_forest()` function is the flagship function of the `randomForestExplainer` package, as it takes your random forest and produces a html report that summarizes all basic results obtained for the forest with the new package. Below, we show the result of running this function with default settings (we only supply the forest and sett interactions = TRUE contrary to the default to show full functionality).
+
+## Glioblastoma forest: our main example
+
+To explore the importance of variables using all functionality of `randomForestExplainer` we just need to run the following:
+
+```{r, eval = FALSE}
+summarize_forest(forest, interactions = TRUE)
+```
+
+Now, in the working directory a file "Summary_of_your_forest.html" appears and it looks like this:
+[Glioblastoma forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Glioblastoma_summary.html)
+
+## Glioblastoma forest with increased mtry
+
+We repeat this for the second version of our forest:
+
+```{r, eval = FALSE}
+summarize_forest(forest_v2, interactions = TRUE)
+```
+
+[Glioblastoma forest version 2 summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Glioblastoma_summary_v2.html)
 
 ## Multi-class classification: breast cancer data
 
-Download and process data:
+We use the breast cancer data as an example of application of random forests to multi-class classification problems. To download and process the data we execute we executed the following code:
 
-```{r}
+```{r, eval = FALSE}
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("DESeq")
 # biocLite("limma")
@@ -266,20 +294,23 @@ Download and process data:
 load("BreastCancer.rda")
 ```
 
-Build a forest:
+Now, we build the random forest with an increased number of trees due to a big number of variables. As this takes a while we retrieve the result from memory and summarize it:
 
-```{r}
+```{r, eval = FALSE}
 # set.seed(2017)
-# forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, importance = TRUE, localImp = TRUE)
+# forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, localImp = TRUE)
 # save(forest_brca, file = "BreastCancer_forest.rda")
 load("BreastCancer_forest.rda")
+summarize_forest(forest_brca, interactions = TRUE)
 ```
+
+[Breast cancer summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/BreastCancer_summary.html)
 
 ## Regression: PISA data
 
-Download and process data:
+The same works for the PISA 2015 dataset, for which we consider regression. To download and process the data we executed the following code:
 
-```{r}
+```{r, eval = FALSE}
 # devtools::install_github("pbiecek/PISA2012lite")
 # library("PISA2012lite")
 
@@ -292,15 +323,32 @@ Download and process data:
 load("PISA.rda")
 ```
 
-Build a forest:
+We build a forest and summarize it:
 
-```{r}
+```{r, eval = FALSE}
 # set.seed(2017)
-# forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, importance = TRUE, localImp = TRUE)
+# forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, localImp = TRUE)
 # save(forest_pisa, file = "PISA_forest.rda")
 load("PISA_forest.rda")
+summarize_forest(forest_pisa, interactions = TRUE)
 ```
 
+[PISA forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/PISA_summary.html)
 
+## Regression: Boston data
+
+To easily compare the results of using `randomForestExplainer` to the ones obtained by `ggRandomForests`, another package dealing with random forest visualisation, we also consider the regression example for the `Boston` dataset from package `MASS`, which was used in the package vignette for `ggRandomForests`. We do that with the following code:
+
+```{r, eval = FALSE}
+# data(Boston, package = "MASS")
+# Boston$chas <- as.logical(Boston$chas)
+# set.seed(2017)
+# forest_Boston <- randomForest(medv ~ ., data = Boston, ntree = 1000, localImp = TRUE)
+# save(forest_Boston, file = "Boston_forest.rda")
+load("Boston_forest.rda")
+summarize_forest(forest_Boston, interactions = TRUE)
+```
+
+[Boston forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Boston_summary.html)
 
 
