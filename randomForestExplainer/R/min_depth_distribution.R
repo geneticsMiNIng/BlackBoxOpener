@@ -35,6 +35,7 @@ calculate_tree_depth <- function(frame){
 #' @return A data frame with the value of minimal depth for every variable in every tree
 #'
 #' @import dplyr
+#' @importFrom data.table rbindlist
 #'
 #' @examples
 #' min_depth_distribution(randomForest::randomForest(Species ~ ., data = iris))
