@@ -19,5 +19,5 @@ plot_min_depth_interactions(interactions_frame)
 You can explore the data used for plotting by interacting with the following table:
 
 ```{r}
-knitr::kable(interactions_frame, format = "html")
+datatable(interactions_frame)
 ```
