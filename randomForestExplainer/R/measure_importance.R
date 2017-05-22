@@ -22,7 +22,7 @@ measure_importance <- function(forest){
   colnames(min_depth_frame) <- c("tree", "variable", "minimal_depth")
   min_depth_frame <- as.data.frame(min_depth_frame[!is.na(min_depth_frame$variable),])
   importance_frame <- aggregate(minimal_depth ~ variable, data = min_depth_frame, mean)
-  colnames(importance_frame)[2] <- "mean_minimal_depth"
+  colnames(importance_frame)[2] <- "mean_min_depth"
   importance_frame$variable <- as.character(importance_frame$variable)
   nodes_occurances <- dplyr::group_by(forest_table, `split var`) %>%
     dplyr::summarize(n())
@@ -74,8 +74,8 @@ measure_importance <- function(forest){
 #' @export
 important_variables <- function(importance_frame, k = 15, measures = names(importance_frame)[2:5],
                                 ties_action = "all"){
-  rankings <- data.frame(variable = importance_frame$variable, mean_minimal_depth =
-                           data.table::frankv(importance_frame$mean_minimal_depth, ties.method = "dense"),
+  rankings <- data.frame(variable = importance_frame$variable, mean_min_depth =
+                           data.table::frankv(importance_frame$mean_min_depth, ties.method = "dense"),
                          apply(importance_frame[, -c(1, 2)], 2,
                                function(x) frankv(x, order = -1, ties.method = "dense")))
   rankings$index <- rowSums(rankings[, measures])
@@ -116,7 +116,7 @@ important_variables <- function(importance_frame, k = 15, measures = names(impor
 #' plot_multi_way_importance(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 #'
 #' @export
-plot_multi_way_importance <- function(importance_frame, x_measure = "mean_minimal_depth",
+plot_multi_way_importance <- function(importance_frame, x_measure = "mean_min_depth",
                                       y_measure = "times_a_root", size_measure = NULL,
                                       min_no_of_trees = 0.1*max(importance_frame$no_of_trees),
                                       no_of_labels = 10,
@@ -187,11 +187,13 @@ plot_importance_ggpairs <- function(importance_frame, measures =
 plot_importance_rankings <- function(importance_frame, measures =
                                        names(importance_frame)[c(2, 4, 5, 3, 7)],
                                      main = "Relations between rankings according to different measures"){
-  rankings <- data.frame(variable = importance_frame$variable, mean_minimal_depth =
-                           frankv(importance_frame$mean_minimal_depth, ties.method = "dense"),
+  rankings <- data.frame(variable = importance_frame$variable, mean_min_depth =
+                           frankv(importance_frame$mean_min_depth, ties.method = "dense"),
                          apply(importance_frame[, -c(1, 2)], 2,
                                function(x) frankv(x, order = -1, ties.method = "dense")))
-  plot <- ggpairs(rankings[, measures]) + theme_bw()
+  plot <- ggpairs(rankings[, measures], lower = list(continuous = function(data, mapping){
+    ggplot(data = data, mapping = mapping) + geom_point() +  geom_smooth(method = loess)
+    }))+ theme_bw()
   if(!is.null(main)){
     plot <- plot + ggtitle(main)
   }

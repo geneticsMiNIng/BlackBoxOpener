@@ -15,8 +15,8 @@
 #' @export
 summarize_forest <- function(forest, interactions = FALSE, vars = NULL,
                              measures = if(forest$type == "classification")
-                               c("mean_minimal_depth", "accuracy_decrease", "gini_decrease", "no_of_nodes", "times_a_root") else
-                                 c("mean_minimal_depth", "mse_increase", "node_purity_increase", "no_of_nodes", "times_a_root")){
+                               c("mean_min_depth", "accuracy_decrease", "gini_decrease", "no_of_nodes", "times_a_root") else
+                                 c("mean_min_depth", "mse_increase", "node_purity_increase", "no_of_nodes", "times_a_root")){
   environment <- new.env()
   environment$forest <- forest
   environment$interactions <- interactions

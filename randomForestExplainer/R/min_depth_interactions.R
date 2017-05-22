@@ -94,7 +94,7 @@ min_depth_interactions <- function(forest, vars){
     dplyr::summarize_each_(funs(mean(., na.rm = TRUE)), vars) %>% as.data.frame()
   interactions_frame[is.na(as.matrix(interactions_frame))] <- NA
   interactions_frame <- reshape2::melt(interactions_frame, id.vars = "variable")
-  colnames(interactions_frame)[2:3] <- c("root_variable", "mean_minimal_depth")
+  colnames(interactions_frame)[2:3] <- c("root_variable", "mean_min_depth")
   occurances <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
     dplyr::summarize_each_(funs(sum(!is.na(.))), vars) %>% as.data.frame()
@@ -121,11 +121,11 @@ plot_min_depth_interactions <- function(interactions_frame, k = 30,
   interactions_frame$interaction <- factor(interactions_frame$interaction, levels =
                                              interactions_frame[
                                                order(interactions_frame$occurances, decreasing = TRUE), "interaction"])
-  minimum <- min(interactions_frame$mean_minimal_depth, na.rm = TRUE)
+  minimum <- min(interactions_frame$mean_min_depth, na.rm = TRUE)
   if(is.null(k)) k <- length(levels(interactions_frame$interaction))
   plot <- ggplot(interactions_frame[interactions_frame$interaction %in% levels(interactions_frame$interaction)[1:k] &
-                                      !is.na(interactions_frame$mean_minimal_depth), ],
-                 aes(x = interaction, y = mean_minimal_depth, fill = occurances)) +
+                                      !is.na(interactions_frame$mean_min_depth), ],
+                 aes(x = interaction, y = mean_min_depth, fill = occurances)) +
     geom_bar(stat = "identity") +
     geom_hline(aes(yintercept = minimum, linetype = "minimum"), color = "red", size = 1.5) +
     scale_linetype_manual(name = NULL, values = 1) + theme_bw() +
