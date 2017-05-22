@@ -19,5 +19,5 @@ plot_min_depth_interactions(interactions_frame)
 You can explore the data used for plotting by interacting with the following table:
 
 ```{r}
-datatable(interactions_frame)
+formatRound(datatable(importance_frame), 3, digits = 4)
 ```
