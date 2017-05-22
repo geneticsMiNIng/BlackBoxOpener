@@ -43,6 +43,14 @@ plot_min_depth_distribution(min_depth_frame)
 
 Minimal depth for a variable in a tree equals to the depth of the node which splits on that variable and is the closest to the root of the tree. If it is low than a lot of observations are divided into groups on the basis of this variable
 
+## Importance measures
+
+Below you can explore the measures of importance for all variables in the forest:
+
+```{r}
+knitr::kable(importance_frame, format = "html")
+```
+
 ## Multi-way importance plot
 
 The multi-way importance plot shows the relation between three measures of importance and labels 10 variables which scored best when it comes to these three measures (i.e. for which the sum of the ranks for those measures is the lowest).
