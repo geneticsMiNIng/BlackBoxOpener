@@ -140,13 +140,13 @@ The next step is to plot two or three of those measures against each other. This
 Below, we use the Multi-way importance plot to visualize our forest for four different sets of parameters:
 
 ```{r, fig.width = 7, fig.height = 7}
-# Possible measures for classification: "mean_minimal_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+# Possible measures for classification: "mean_min_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "no_of_trees", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
                           main = "Multi-way importance plot")
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "no_of_nodes", size_measure = "accuracy_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
@@ -158,12 +158,12 @@ Note, that the above plots are almost identical -- that is because the number of
 One could also consider the number of times the variable was used for splitting at the root or rearrange the dimensions and reduce the number of points plotted:
 
 ```{r, fig.width = 7, fig.height = 7}
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "times_a_root", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
                           main = "Multi-way importance plot")
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "gini_decrease", size_measure = "times_a_root", 
                           min_no_of_trees = 0.4*max(importance_frame$no_of_trees),
                           no_of_labels = 15, 
@@ -195,7 +195,7 @@ As we can see, in applications with so many variables as here these kinds of plo
 Up untill now we only analyzed single variables trying to get a sense of how important they are in a forest. A natural extension of that approach would be to consider interactions of variables. To do that, we need to pick a subset of variables with which we will interact the other ones (the trees in a forest have a hierarchical structure, so when we consider an interaction of two variables, one is used for splitting higher in the tree than the other, if at all). These should be variables somewhat important in the forest on their own so we use importance measures to select them using the function `important_variables()` which takes as arguments your importance frame, the number of variables that you want to get and the measures on the basis of which the variables should be selected (the function ranks variables according to those measures and than uses the sum of those rankings):
 
 ```{r}
-vars <- important_variables(importance_frame, k = 20, measures = c("mean_minimal_depth", "no_of_trees"))
+vars <- important_variables(importance_frame, k = 20, measures = c("mean_min_depth", "no_of_trees"))
 ```
 
 ## Conditional minimal depth
@@ -232,8 +232,8 @@ The most frequent interaction in this forest occured only three times, which mak
 # save(forest_v2, file = "GlioblastomaWide_forest_v2.rda")
 load("GlioblastomaWide_forest_v2.rda")
 importance_frame <- measure_importance(forest_v2)
-vars <- important_variables(importance_frame, k = 20, measures = c("mean_minimal_depth", "no_of_trees"))
-interactions_frame <- min_depth_interactions(forest_v2, vars)
+vars <- important_variables(importance_frame, k = 20, measures = c("mean_min_depth", "no_of_trees"))
+# interactions_frame <- min_depth_interactions(forest_v2, vars)
 # save(interactions_frame, file = "GlioblastomaWide_interactions_frame_v2.rda")
 load("GlioblastomaWide_interactions_frame_v2.rda")
 head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE), ])

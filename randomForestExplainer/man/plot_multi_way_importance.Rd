@@ -4,7 +4,7 @@
 \alias{plot_multi_way_importance}
 \title{Multi-way importance plot}
 \usage{
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth",
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth",
   y_measure = "times_a_root", size_measure = NULL, min_no_of_trees = 0.1 *
   max(importance_frame$no_of_trees), no_of_labels = 10,
   main = "Multi-way importance plot")

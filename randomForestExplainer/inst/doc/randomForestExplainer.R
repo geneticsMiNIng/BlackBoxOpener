@@ -45,25 +45,25 @@ load("GlioblastomaWide_importance_frame.rda")
 head(importance_frame, n = 10)
 
 ## ---- fig.width = 7, fig.height = 7--------------------------------------
-# Possible measures for classification: "mean_minimal_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+# Possible measures for classification: "mean_min_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "no_of_trees", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
                           main = "Multi-way importance plot")
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "no_of_nodes", size_measure = "accuracy_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
                           main = "Multi-way importance plot")
 
 ## ---- fig.width = 7, fig.height = 7--------------------------------------
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "times_a_root", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
                           main = "Multi-way importance plot")
-plot_multi_way_importance(importance_frame, x_measure = "mean_minimal_depth", 
+plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "gini_decrease", size_measure = "times_a_root", 
                           min_no_of_trees = 0.4*max(importance_frame$no_of_trees),
                           no_of_labels = 15, 
@@ -76,7 +76,7 @@ plot_importance_ggpairs(importance_frame)
 plot_importance_rankings(importance_frame)
 
 ## ------------------------------------------------------------------------
-vars <- important_variables(importance_frame, k = 20, measures = c("mean_minimal_depth", "no_of_trees"))
+vars <- important_variables(importance_frame, k = 20, measures = c("mean_min_depth", "no_of_trees"))
 
 ## ------------------------------------------------------------------------
 # interactions_frame <- min_depth_interactions(forest, vars)
@@ -95,8 +95,8 @@ head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE),
 # save(forest_v2, file = "GlioblastomaWide_forest_v2.rda")
 load("GlioblastomaWide_forest_v2.rda")
 importance_frame <- measure_importance(forest_v2)
-vars <- important_variables(importance_frame, k = 20, measures = c("mean_minimal_depth", "no_of_trees"))
-interactions_frame <- min_depth_interactions(forest_v2, vars)
+vars <- important_variables(importance_frame, k = 20, measures = c("mean_min_depth", "no_of_trees"))
+# interactions_frame <- min_depth_interactions(forest_v2, vars)
 # save(interactions_frame, file = "GlioblastomaWide_interactions_frame_v2.rda")
 load("GlioblastomaWide_interactions_frame_v2.rda")
 head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE), ])
