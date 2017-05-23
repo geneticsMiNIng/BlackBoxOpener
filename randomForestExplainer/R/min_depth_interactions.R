@@ -102,6 +102,16 @@ min_depth_interactions <- function(forest, vars){
   colnames(occurances)[2:3] <- c("root_variable", "occurances")
   interactions_frame <- merge(interactions_frame, occurances)
   interactions_frame$interaction <- paste(interactions_frame$root_variable, interactions_frame$variable, sep = ":")
+  forest_table <-
+    lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
+             calculate_tree_depth() %>% cbind(tree = i)) %>%
+    data.table::rbindlist()
+  min_depth_frame <- dplyr::group_by(forest_table, tree, `split var`) %>%
+    dplyr::summarize(min(depth))
+  colnames(min_depth_frame) <- c("tree", "variable", "uncond_mean_min_depth")
+  min_depth_frame <- as.data.frame(min_depth_frame[!is.na(min_depth_frame$variable),])
+  importance_frame <- aggregate(uncond_mean_min_depth ~ variable, data = min_depth_frame, mean)
+  interactions_frame <- merge(interactions_frame, importance_frame)
   return(interactions_frame)
 }
 
@@ -127,8 +137,11 @@ plot_min_depth_interactions <- function(interactions_frame, k = 30,
                                       !is.na(interactions_frame$mean_min_depth), ],
                  aes(x = interaction, y = mean_min_depth, fill = occurances)) +
     geom_bar(stat = "identity") +
+    geom_pointrange(aes(ymin = pmin(mean_min_depth, uncond_mean_min_depth), y = uncond_mean_min_depth,
+                    ymax = pmax(mean_min_depth, uncond_mean_min_depth), shape = "unconditional"), fatten = 2, size = 1) +
     geom_hline(aes(yintercept = minimum, linetype = "minimum"), color = "red", size = 1.5) +
     scale_linetype_manual(name = NULL, values = 1) + theme_bw() +
+    scale_shape_manual(name = NULL, values = 19) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   if(!is.null(main)){
     plot <- plot + ggtitle(main)
