@@ -48,7 +48,7 @@ Minimal depth for a variable in a tree equals to the depth of the node which spl
 Below you can explore the measures of importance for all variables in the forest:
 
 ```{r}
-formatRound(datatable(importance_frame), c(2,4,5), digits = 4)
+formatRound(datatable(importance_frame), c(2, 4, 5, 8), digits = 4)
 ```
 
 ## Multi-way importance plot

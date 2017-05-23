@@ -45,7 +45,7 @@ load("GlioblastomaWide_importance_frame.rda")
 head(importance_frame, n = 10)
 
 ## ---- fig.width = 7, fig.height = 7--------------------------------------
-# Possible measures for classification: "mean_min_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
+# Possible measures for classification: "mean_min_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root", "p_value"
 plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "no_of_trees", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
@@ -59,7 +59,7 @@ plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth",
 
 ## ---- fig.width = 7, fig.height = 7--------------------------------------
 plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
-                          y_measure = "times_a_root", size_measure = "gini_decrease", 
+                          y_measure = "times_a_root", size_measure = "p_value", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
                           main = "Multi-way importance plot")

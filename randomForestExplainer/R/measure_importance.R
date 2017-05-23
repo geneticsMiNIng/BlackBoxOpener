@@ -53,6 +53,11 @@ measure_importance <- function(forest){
   importance_frame <- merge(importance_frame, trees_occurances, all = TRUE)
   importance_frame <- merge(importance_frame, root_count, all = TRUE)
   importance_frame[is.na(importance_frame$no_of_nodes), c("no_of_nodes", "no_of_trees", "times_a_root")] <- 0
+  total_no_of_nodes <- sum(importance_frame$no_of_nodes)
+  importance_frame$p_value <-
+    unlist(lapply(importance_frame$no_of_nodes,
+                  function(x) binom.test(x, total_no_of_nodes, 1/nrow(importance_frame),
+                                         alternative = "greater")$p.value))
   importance_frame$variable <- as.factor(importance_frame$variable)
   return(importance_frame)
 }
@@ -76,7 +81,9 @@ important_variables <- function(importance_frame, k = 15, measures = names(impor
                                 ties_action = "all"){
   rankings <- data.frame(variable = importance_frame$variable, mean_min_depth =
                            data.table::frankv(importance_frame$mean_min_depth, ties.method = "dense"),
-                         apply(importance_frame[, -c(1, 2)], 2,
+                         p_value =
+                           data.table::frankv(importance_frame$p_value, ties.method = "dense"),
+                         apply(importance_frame[, -c(1, 2, 8)], 2,
                                function(x) frankv(x, order = -1, ties.method = "dense")))
   rankings$index <- rowSums(rankings[, measures])
   vars <- as.character(rankings[order(rankings$index), "variable"])[1:min(k, nrow(rankings))]

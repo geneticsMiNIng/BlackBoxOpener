@@ -112,7 +112,7 @@ First, the function `measure_importance` calculates all importance measures for 
 
 - *number of times the variable splits at node*
 
-- *significance of the variable* [not added yet].
+- *significance of the variable* p-value for the one-sided binomial test in which success means that a variable was used for splitting at a node, the number of trials is the total number of nodes and the probability of the split is equal to $$\mathbb{P}(\text{node splits on x}) = \mathbb{P}(\{x is among the variables tried})\mathbb{P}(\text{x is selected}) = \frac{\text{mtry}}{\text{no of variables}} \frac{1}{\text{mtry}} = \frac{1}{\text{no of variables}}.$$
 
 For our forest we get the following result:
 
@@ -140,7 +140,7 @@ The next step is to plot two or three of those measures against each other. This
 Below, we use the Multi-way importance plot to visualize our forest for four different sets of parameters:
 
 ```{r, fig.width = 7, fig.height = 7}
-# Possible measures for classification: "mean_min_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root"
+# Possible measures for classification: "mean_min_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root", "p_value"
 plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
                           y_measure = "no_of_trees", size_measure = "gini_decrease", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
@@ -159,7 +159,7 @@ One could also consider the number of times the variable was used for splitting 
 
 ```{r, fig.width = 7, fig.height = 7}
 plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
-                          y_measure = "times_a_root", size_measure = "gini_decrease", 
+                          y_measure = "times_a_root", size_measure = "p_value", 
                           min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
                           no_of_labels = 10, 
                           main = "Multi-way importance plot")
