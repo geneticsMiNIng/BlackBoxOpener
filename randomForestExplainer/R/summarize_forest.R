@@ -9,6 +9,8 @@
 #'
 #' @return A html document in your working directory
 #'
+#' @import DT
+#'
 #' @examples
 #' summarize_forest(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE), vars = names(iris), interactions = TRUE)
 #'
