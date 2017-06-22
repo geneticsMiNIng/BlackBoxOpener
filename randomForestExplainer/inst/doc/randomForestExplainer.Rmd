@@ -114,6 +114,8 @@ First, the function `measure_importance` calculates all importance measures for 
 
 - *significance of the variable* p-value for the one-sided binomial test in which success means that a variable was used for splitting at a node, the number of trials is the total number of nodes and the probability of the split is equal to $$\mathbb{P}(\text{node splits on x}) = \mathbb{P}(\{x is among the variables tried})\mathbb{P}(\text{x is selected}) = \frac{\text{mtry}}{\text{no of variables}} \frac{1}{\text{mtry}} = \frac{1}{\text{no of variables}}.$$
 
+$$P(X=x) = \sigma$$
+
 For our forest we get the following result:
 
 ```{r}
