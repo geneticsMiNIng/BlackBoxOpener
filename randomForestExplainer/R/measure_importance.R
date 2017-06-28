@@ -3,6 +3,7 @@
 #' Get a data frame with various measures of importance of variables in a random forest
 #'
 #' @param forest A random forest produced by the function randomForest with option localImp = TRUE
+#' @param mean_sample The sample of trees on which mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"
 #'
 #' @return A data frame with rows corresponding to variables and columns to various measures of importance of variables
 #'
@@ -12,7 +13,7 @@
 #' measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE))
 #'
 #' @export
-measure_importance <- function(forest){
+measure_importance <- function(forest, mean_sample = "top_trees"){
   forest_table <-
     lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
              calculate_tree_depth() %>% cbind(tree = i)) %>%
@@ -21,14 +22,14 @@ measure_importance <- function(forest){
     dplyr::summarize(min(depth))
   colnames(min_depth_frame) <- c("tree", "variable", "minimal_depth")
   min_depth_frame <- as.data.frame(min_depth_frame[!is.na(min_depth_frame$variable),])
-  importance_frame <- aggregate(minimal_depth ~ variable, data = min_depth_frame, mean)
+  importance_frame <- get_min_depth_means(min_depth_frame, min_depth_count(min_depth_frame), mean_sample)
   colnames(importance_frame)[2] <- "mean_min_depth"
   importance_frame$variable <- as.character(importance_frame$variable)
-  nodes_occurances <- dplyr::group_by(forest_table, `split var`) %>%
+  nodes_occurrences <- dplyr::group_by(forest_table, `split var`) %>%
     dplyr::summarize(n())
-  colnames(nodes_occurances) <- c("variable", "no_of_nodes")
-  nodes_occurances <- as.data.frame(nodes_occurances[!is.na(nodes_occurances$variable),])
-  nodes_occurances$variable <- as.character(nodes_occurances$variable)
+  colnames(nodes_occurrences) <- c("variable", "no_of_nodes")
+  nodes_occurrences <- as.data.frame(nodes_occurrences[!is.na(nodes_occurrences$variable),])
+  nodes_occurrences$variable <- as.character(nodes_occurrences$variable)
   if(forest$type == "classification"){
     vimp_frame <- as.data.frame(forest$importance[, c("MeanDecreaseAccuracy", "MeanDecreaseGini")])
     colnames(vimp_frame) <- c("accuracy_decrease", "gini_decrease")
@@ -37,22 +38,20 @@ measure_importance <- function(forest){
     colnames(vimp_frame) <- c("mse_increase", "node_purity_increase")
   }
   vimp_frame$variable <- rownames(vimp_frame)
-  min_depth_count <- dplyr::group_by(min_depth_frame, variable, minimal_depth) %>%
+  trees_occurrences <- dplyr::group_by(min_depth_frame, variable) %>%
     dplyr::summarize(count = n()) %>% as.data.frame()
-  trees_occurances <- aggregate(count ~ variable, data = min_depth_count, sum)
-  colnames(trees_occurances)[2] <- "no_of_trees"
-  trees_occurances$variable <- as.character(trees_occurances$variable)
-  root_count <-
-    merge(min_depth_count[min_depth_count$minimal_depth == 0, c("variable", "count")],
-          data.frame(variable = unique(min_depth_count$variable)), all = TRUE)
+  colnames(trees_occurrences)[2] <- "no_of_trees"
+  trees_occurrences$variable <- as.character(trees_occurrences$variable)
+  root_count <- min_depth_frame[min_depth_frame$minimal_depth == 0, ] %>%
+    dplyr::group_by(variable) %>% dplyr::summarize(count = n()) %>% as.data.frame()
   colnames(root_count)[2] <- "times_a_root"
   root_count$variable <- as.character(root_count$variable)
-  root_count[is.na(root_count$times_a_root), "times_a_root"] <- 0
-  importance_frame <- merge(importance_frame, nodes_occurances, all = TRUE)
+  importance_frame <- merge(importance_frame, nodes_occurrences, all = TRUE)
   importance_frame <- merge(importance_frame, vimp_frame, all = TRUE)
-  importance_frame <- merge(importance_frame, trees_occurances, all = TRUE)
+  importance_frame <- merge(importance_frame, trees_occurrences, all = TRUE)
   importance_frame <- merge(importance_frame, root_count, all = TRUE)
-  importance_frame[is.na(importance_frame$no_of_nodes), c("no_of_nodes", "no_of_trees", "times_a_root")] <- 0
+  importance_frame[is.na(importance_frame$no_of_nodes), c("no_of_nodes", "no_of_trees")] <- 0
+  importance_frame[is.na(importance_frame$times_a_root), "times_a_root"] <- 0
   total_no_of_nodes <- sum(importance_frame$no_of_nodes)
   importance_frame$p_value <-
     unlist(lapply(importance_frame$no_of_nodes,
@@ -125,18 +124,37 @@ important_variables <- function(importance_frame, k = 15, measures = names(impor
 #' @export
 plot_multi_way_importance <- function(importance_frame, x_measure = "mean_min_depth",
                                       y_measure = "times_a_root", size_measure = NULL,
-                                      min_no_of_trees = 0.1*max(importance_frame$no_of_trees),
-                                      no_of_labels = 10,
+                                      min_no_of_trees = 0, no_of_labels = 10,
                                       main = "Multi-way importance plot"){
   data <- importance_frame[importance_frame$no_of_trees > min_no_of_trees, ]
   data_for_labels <- importance_frame[importance_frame$variable %in%
                                         important_variables(importance_frame, k = no_of_labels,
                                                             measures = c(x_measure, y_measure, size_measure)), ]
-  plot <- ggplot(data, aes_string(x = x_measure, y = y_measure, size = size_measure)) +
-    geom_point(aes(colour = "black")) + geom_point(data = data_for_labels, aes(colour = "blue")) +
-    geom_label_repel(data = data_for_labels, aes(label = variable, size = NULL), show.legend = FALSE) +
-    scale_colour_manual(name = "variable", values = c("black", "blue"), labels = c("non-top", "top")) +
-    theme_bw()
+  if(!is.null(size_measure)){
+    if(size_measure == "p_value"){
+      data$p_value <- cut(data$p_value, breaks = c(-Inf, 0.01, 0.05, 0.1, Inf), labels = c("***", "**", "*", " "))
+      plot <- ggplot(data, aes_string(x = x_measure, y = y_measure)) +
+        geom_point(aes_string(color = size_measure), size = 3) +
+        geom_point(data = data_for_labels, color = "black", stroke = 2, size = 3, aes(fill = "top"), shape = 21) +
+        geom_label_repel(data = data_for_labels, aes(label = variable), show.legend = FALSE) +
+        theme_bw() + scale_fill_discrete(name = "variable")
+    } else {
+      plot <- ggplot(data, aes_string(x = x_measure, y = y_measure, size = size_measure)) +
+        geom_point(aes(colour = "black")) + geom_point(data = data_for_labels, aes(colour = "blue")) +
+        geom_label_repel(data = data_for_labels, aes(label = variable, size = NULL), show.legend = FALSE) +
+        scale_colour_manual(name = "variable", values = c("black", "blue"), labels = c("non-top", "top")) +
+        theme_bw()
+      if(size_measure == "mean_min_depth"){
+        plot <- plot + scale_size(trans = "reverse")
+      }
+    }
+  } else {
+    plot <- ggplot(data, aes_string(x = x_measure, y = y_measure)) +
+      geom_point(aes(colour = "black")) + geom_point(data = data_for_labels, aes(colour = "blue")) +
+      geom_label_repel(data = data_for_labels, aes(label = variable, size = NULL), show.legend = FALSE) +
+      scale_colour_manual(name = "variable", values = c("black", "blue"), labels = c("non-top", "top")) +
+      theme_bw()
+  }
   if(x_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root")){
     plot <- plot + scale_x_sqrt()
   } else if(y_measure %in% c("no_of_nodes", "no_of_trees", "times_a_root")){

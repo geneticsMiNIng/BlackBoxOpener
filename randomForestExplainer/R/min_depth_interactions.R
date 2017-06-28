@@ -95,12 +95,12 @@ min_depth_interactions <- function(forest, vars){
   interactions_frame[is.na(as.matrix(interactions_frame))] <- NA
   interactions_frame <- reshape2::melt(interactions_frame, id.vars = "variable")
   colnames(interactions_frame)[2:3] <- c("root_variable", "mean_min_depth")
-  occurances <-
+  occurrences <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
     dplyr::summarize_each_(funs(sum(!is.na(.))), vars) %>% as.data.frame()
-  occurances <- reshape2::melt(occurances, id.vars = "variable")
-  colnames(occurances)[2:3] <- c("root_variable", "occurances")
-  interactions_frame <- merge(interactions_frame, occurances)
+  occurrences <- reshape2::melt(occurrences, id.vars = "variable")
+  colnames(occurrences)[2:3] <- c("root_variable", "occurrences")
+  interactions_frame <- merge(interactions_frame, occurrences)
   interactions_frame$interaction <- paste(interactions_frame$root_variable, interactions_frame$variable, sep = ":")
   forest_table <-
     lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
@@ -130,12 +130,12 @@ plot_min_depth_interactions <- function(interactions_frame, k = 30,
                                                       paste0(k, " most frequent interactions"))){
   interactions_frame$interaction <- factor(interactions_frame$interaction, levels =
                                              interactions_frame[
-                                               order(interactions_frame$occurances, decreasing = TRUE), "interaction"])
+                                               order(interactions_frame$occurrences, decreasing = TRUE), "interaction"])
   minimum <- min(interactions_frame$mean_min_depth, na.rm = TRUE)
   if(is.null(k)) k <- length(levels(interactions_frame$interaction))
   plot <- ggplot(interactions_frame[interactions_frame$interaction %in% levels(interactions_frame$interaction)[1:k] &
                                       !is.na(interactions_frame$mean_min_depth), ],
-                 aes(x = interaction, y = mean_min_depth, fill = occurances)) +
+                 aes(x = interaction, y = mean_min_depth, fill = occurrences)) +
     geom_bar(stat = "identity") +
     geom_pointrange(aes(ymin = pmin(mean_min_depth, uncond_mean_min_depth), y = uncond_mean_min_depth,
                     ymax = pmax(mean_min_depth, uncond_mean_min_depth), shape = "unconditional"), fatten = 2, size = 1) +

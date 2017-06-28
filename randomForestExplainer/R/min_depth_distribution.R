@@ -1,15 +1,4 @@
-#' Calculate depth in a tree
-#'
-#' Calculate the depth of each node in a tree
-#'
-#' @param frame A data frame returned by the function getTree() applied to a random forest
-#'
-#' @return The original data frame with an additional column \code{depth}
-#'
-#' @examples
-#' calculate_tree_depth(randomForest::getTree(randomForest::randomForest(Species ~ ., data = iris), k = 1, labelVar = TRUE))
-#'
-#' @export
+# Calculate the depth of each node in a single tree obtained from a forest with randomForest::getTree
 calculate_tree_depth <- function(frame){
   if(!is.data.frame(frame)) stop("The object is not a data frame!")
   if(!all(c("right daughter", "left daughter") %in% names(frame))){
@@ -61,15 +50,15 @@ min_depth_count <- function(min_depth_frame){
   mean_tree_depth <- mean(mean_tree_depth$depth)
   min_depth_count <- dplyr::group_by(min_depth_frame, variable, minimal_depth) %>%
     dplyr::summarize(count = n()) %>% as.data.frame()
-  occurances <- stats::aggregate(count ~ variable, data = min_depth_count, sum)
-  colnames(occurances)[2] <- "no_of_occurances"
+  occurrences <- stats::aggregate(count ~ variable, data = min_depth_count, sum)
+  colnames(occurrences)[2] <- "no_of_occurrences"
   min_depth_count <-
-    data.frame(variable = occurances$variable, minimal_depth = NA,
-               count = max(min_depth_frame$tree) - occurances$no_of_occurances) %>%
+    data.frame(variable = occurrences$variable, minimal_depth = NA,
+               count = max(min_depth_frame$tree) - occurrences$no_of_occurrences) %>%
     rbind(min_depth_count)
   min_depth_count <- min_depth_count[order(min_depth_count$variable, min_depth_count$minimal_depth),]
   rownames(min_depth_count) <- 1:nrow(min_depth_count)
-  return(list(min_depth_count, occurances, mean_tree_depth))
+  return(list(min_depth_count, occurrences, mean_tree_depth))
 }
 
 # Get a data frame with means of minimal depth calculated using sample = c("all_trees", "top_trees", "relevant_trees")
@@ -102,6 +91,7 @@ get_min_depth_means <- function(min_depth_frame, min_depth_count_list, mean_samp
 #' @param mean_sample The sample of trees on which mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"
 #' @param mean_scale Logical: should the values of mean minimal depth be rescaled to the interval [0,1]?
 #' @param mean_round The number of digits used for displaying mean minimal depth
+#' @param main A string to be used as title of the plot
 #'
 #' @return A ggplot object
 #'
@@ -110,7 +100,8 @@ get_min_depth_means <- function(min_depth_frame, min_depth_count_list, mean_samp
 #'
 #' @export
 plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees = 0,
-                                        mean_sample = "top_trees", mean_scale = FALSE, mean_round = 2){
+                                        mean_sample = "top_trees", mean_scale = FALSE, mean_round = 2,
+                                        main = "Distribution of minimal depth and its mean"){
   min_depth_count_list <- min_depth_count(min_depth_frame)
   min_depth_means <- get_min_depth_means(min_depth_frame, min_depth_count_list, mean_sample)
   frame_with_means <- merge(min_depth_count_list[[1]], min_depth_means)
@@ -125,8 +116,8 @@ plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees
   frame_with_means$mean_minimal_depth_label <-
     (frame_with_means$mean_minimal_depth - min(frame_with_means$mean_minimal_depth))/
     (max(frame_with_means$mean_minimal_depth) - min(frame_with_means$mean_minimal_depth)) *
-    max(min_depth_count_list[[2]]$no_of_occurances)
-  variables <- min_depth_count_list[[2]][min_depth_count_list[[2]]$no_of_occurances >= min_no_of_trees, "variable"]
+    max(min_depth_count_list[[2]]$no_of_occurrences)
+  variables <- min_depth_count_list[[2]][min_depth_count_list[[2]]$no_of_occurrences >= min_no_of_trees, "variable"]
   frame_with_means <- frame_with_means[frame_with_means$variable %in% variables, ]
   frame_with_means <-
     within(frame_with_means, variable <-
@@ -141,8 +132,10 @@ plot_min_depth_distribution <- function(min_depth_frame, k = 10, min_no_of_trees
     scale_x_discrete(limits = rev(levels(data$variable))) +
     geom_errorbar(aes(ymin = mean_minimal_depth_label, ymax = mean_minimal_depth_label), size = 1.5) +
     xlab("Variable") + ylab("Number of trees") + guides(fill = guide_legend(title = "Minimal depth")) +
-    ggtitle("The distribution of minimal depth") + theme_bw() +
-    geom_label(data = data_for_labels,
-              aes(y = mean_minimal_depth_label, label = mean_minimal_depth))
+    theme_bw() + geom_label(data = data_for_labels,
+                            aes(y = mean_minimal_depth_label, label = mean_minimal_depth))
+  if(!is.null(main)){
+    plot <- plot + ggtitle(main)
+  }
   return(plot)
 }
