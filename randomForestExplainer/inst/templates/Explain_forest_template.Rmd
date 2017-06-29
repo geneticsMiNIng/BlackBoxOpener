@@ -75,10 +75,10 @@ measures_print <- paste(measure1, measure2, sep = " and ")
 plot_multi_way_importance(importance_frame, size_measure = "no_of_nodes")
 ```
 
-The second multi-way importance plot shows two importance measures that derive from the role a variable plays in prediction: `r print(noquote(measures_print))` with the additional information on the number of trees in which a variable was used for splitting.
+The second multi-way importance plot shows two importance measures that derive from the role a variable plays in prediction: `r print(noquote(measures_print))` with the additional information on the $p$-value based on a binomial distribution of the number of nodes split on the variable assuming that variables are randomly drawn to form splits (i.e. if a variable is significant it means that the variable is used for splitting more often than would be the case if the selection was random).
 
 ```{r}
-plot_multi_way_importance(importance_frame, x_measure = measure1, y_measure = measure2, size_measure = "no_of_trees")
+plot_multi_way_importance(importance_frame, x_measure = measure1, y_measure = measure2, size_measure = "p_value")
 ```
 
 ## Compare importance measures
@@ -97,5 +97,5 @@ The plot below shows bilateral relations between the rankings of variables accor
 plot_importance_rankings(importance_frame, measures) + theme_set(theme_bw(13))
 ```
 
-```{r conditional_print, child = 'Summarize_forest_template_interactions.Rmd', eval = interactions}
+```{r conditional_print, child = 'Explain_forest_template_interactions.Rmd', eval = interactions}
 ```

@@ -88,10 +88,6 @@ min_depth_interactions <- function(forest, vars, mean_sample = "top_trees",
     interactions_frame[is.na(as.matrix(interactions_frame))] <- 0
     interactions_frame[, -1] <- (interactions_frame[, -1] * occurrences[, -1] +
                                    as.matrix(non_occurrences[, -1]) %*% diag(mean_tree_depth))/forest$ntree
-  } else if(mean_sample == "relevant_trees"){
-    interactions_frame <-
-      min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
-      dplyr::summarize_each_(funs(mean(., na.rm = TRUE)), vars) %>% as.data.frame()
   }
   interactions_frame <- reshape2::melt(interactions_frame, id.vars = "variable")
   colnames(interactions_frame)[2:3] <- c("root_variable", "mean_min_depth")
@@ -182,9 +178,18 @@ plot_predict_interaction <- function(forest, data, variable1, variable2,
   for(i in other_vars){
     newdata[[i]] <- data[[i]][sample(1:n, nrow(newdata), replace = TRUE)]
   }
-  newdata$prediction <- predict(forest, newdata, type = "response")
-  plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, color = "prediction")) +
-    geom_point(shape = 15, size = 1.5) + theme_bw()
+  if(forest$type == "regression"){
+    newdata$prediction <- predict(forest, newdata, type = "response")
+    plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, color = "prediction")) +
+      geom_point(shape = 15, size = 1.5) + theme_bw()
+  } else if(forest$type == "classification"){
+    id_vars <- colnames(newdata)
+    newdata[, paste0("probability_", forest$classes)] <- predict(forest, newdata, type = "prob")
+    newdata <- reshape2::melt(newdata, id.vars = id_vars)
+    newdata$prediction <- newdata$value
+    plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, color = "prediction")) +
+      geom_point(shape = 15, size = 1) + theme_bw() + facet_wrap(~ variable)
+  }
   if(!is.null(main)){
     plot <- plot + ggtitle(main)
   }
