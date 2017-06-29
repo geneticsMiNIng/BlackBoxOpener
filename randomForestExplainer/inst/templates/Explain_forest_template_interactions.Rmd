@@ -36,7 +36,7 @@ interactions_frame <- interactions_frame[interactions_frame$class %in% c("numeri
 if(nrow(interactions_frame) > 0){
   selected <- interactions_frame[1:min(3, nrow(interactions_frame)), c("root_variable", "variable")]
   for(i in 1:nrow(selected)){
-    print(plot_predict_interaction(forest, data, selected$root_variable[i], selected$variable[i]))
+    print(plot_predict_interaction(forest, data, paste0(selected$root_variable[i]), paste0(selected$variable[i])))
   }
 } else {
   print("There are no interactions among the ones considered that consists of two numerical variables so we cannot plot prediction of the forest on the grid.")
