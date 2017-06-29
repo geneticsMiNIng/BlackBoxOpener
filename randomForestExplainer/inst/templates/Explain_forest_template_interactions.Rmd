@@ -33,8 +33,9 @@ interactions_frame <- merge(interactions_frame, data.frame(variable = names(data
 interactions_frame <- merge(interactions_frame, data.frame(root_variable = names(data), root_class = sapply(data, class)), all.x = TRUE)
 interactions_frame <- interactions_frame[order(interactions_frame$occurrences, decreasing = TRUE), ]
 interactions_frame <- interactions_frame[interactions_frame$class %in% c("numeric", "integer") & interactions_frame$root_class %in% c("numeric", "integer"), ]
+interactions_frame <- interactions_frame[interactions_frame$variable != interactions_frame$root_variable, ]
 if(nrow(interactions_frame) > 0){
-  selected <- interactions_frame[1:min(3, nrow(interactions_frame)), c("root_variable", "variable")]
+  selected <- interactions_frame[1:min(no_of_pred_plots, nrow(interactions_frame)), c("root_variable", "variable")]
   for(i in 1:nrow(selected)){
     print(plot_predict_interaction(forest, data, paste0(selected$root_variable[i]), paste0(selected$variable[i])))
   }
