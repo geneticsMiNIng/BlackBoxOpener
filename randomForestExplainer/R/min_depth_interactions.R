@@ -1,19 +1,4 @@
-#' Calculate conditional depth in a tree
-#'
-#' For a vactor of conditioning variables insert values of conditional depth to a data frame of proper structure
-#'
-#' @param frame A data frame returned by the function calculate_tree_depth(getTree()) applied to a random forest
-#' @param vars A character vector with variables with respect to which conditional minimal depth will be calculated
-#'
-#' @return The original data frame with an additional column \code{depth}
-#'
-#' @import data.table
-#'
-#' @examples
-#' tree_frame <- randomForest::getTree(randomForest::randomForest(Species ~ ., data = iris), k = 1, labelVar = TRUE)
-#' conditional_depth(calculate_tree_depth(cbind(tree_frame, number = 1:nrow(tree_frame))), vars = names(iris))
-#'
-#' @export
+# Calculate conditional depth in a tree with respect to all variables from vector vars
 conditional_depth <- function(frame, vars){
   index <- as.data.table(frame)[, .SD[which.min(depth), "number"], by = `split var`]
   index <- index[!is.na(index$`split var`), ]
@@ -38,22 +23,8 @@ conditional_depth <- function(frame, vars){
   frame[frame == 0] <- NA
   return(frame)
 }
-#' Calculate conditional minimal depth
-#'
-#' Get a data frame with values of minimal depth conditional on selected variables
-#'
-#' @param forest A randomForest object
-#' @param vars A character vector with variables with respect to which conditional minimal depth will be calculated
-#'
-#' @return A data frame with the value of minimal depth conditional on variables from the supplied vector
-#'
-#' @import data.table
-#' @import dplyr
-#'
-#' @examples
-#' min_depth_interactions_values(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris))
-#'
-#' @export
+
+# Get a data frame with values of minimal depth conditional on selected variables for the whole forest
 min_depth_interactions_values <- function(forest, vars){
   if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
   interactions_frame <-
@@ -62,13 +33,16 @@ min_depth_interactions_values <- function(forest, vars){
   interactions_frame[vars] <- as.numeric(NA)
   interactions_frame <-
     as.data.table(interactions_frame)[, conditional_depth(as.data.frame(.SD), vars), by = tree] %>% as.data.frame()
+  mean_tree_depth <- dplyr::group_by(interactions_frame[, c("tree", vars)], tree) %>%
+    dplyr::summarize_each_(funs(max(., na.rm = TRUE)), vars) %>% as.data.frame()
+  mean_tree_depth <- colMeans(mean_tree_depth[, vars], na.rm = TRUE)
   min_depth_interactions_frame <-
     interactions_frame %>% dplyr::group_by(tree, `split var`) %>%
     dplyr::summarize_each_(funs(min(., na.rm = TRUE)), vars) %>% as.data.frame()
-  min_depth_interactions_frame <- min_depth_interactions_frame[!is.na(min_depth_interactions_frame$`split var`),]
+  min_depth_interactions_frame <- min_depth_interactions_frame[!is.na(min_depth_interactions_frame$`split var`), ]
   colnames(min_depth_interactions_frame)[2] <- "variable"
   min_depth_interactions_frame[, -c(1:2)] <- min_depth_interactions_frame[, -c(1:2)] - 1
-  return(min_depth_interactions_frame)
+  return(list(min_depth_interactions_frame, mean_tree_depth))
 }
 
 #' Calculate mean conditional minimal depth
@@ -77,6 +51,8 @@ min_depth_interactions_values <- function(forest, vars){
 #'
 #' @param forest A randomForest object
 #' @param vars A character vector with variables with respect to which conditional minimal depth will be calculated
+#' @param mean_sample The sample of trees on which conditional mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"
+#' @param uncond_mean_sample The sample of trees on which unconditional mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"
 #'
 #' @return A data frame with each observarion giving the means of conditional minimal depth and the size of sample for a given interaction
 #'
@@ -86,18 +62,39 @@ min_depth_interactions_values <- function(forest, vars){
 #' min_depth_interactions(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris))
 #'
 #' @export
-min_depth_interactions <- function(forest, vars){
+min_depth_interactions <- function(forest, vars, mean_sample = "top_trees",
+                                     uncond_mean_sample = mean_sample){
   if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
   min_depth_interactions_frame <- min_depth_interactions_values(forest, vars)
+  mean_tree_depth <- min_depth_interactions_frame[[2]]
+  min_depth_interactions_frame <- min_depth_interactions_frame[[1]]
   interactions_frame <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
     dplyr::summarize_each_(funs(mean(., na.rm = TRUE)), vars) %>% as.data.frame()
   interactions_frame[is.na(as.matrix(interactions_frame))] <- NA
-  interactions_frame <- reshape2::melt(interactions_frame, id.vars = "variable")
-  colnames(interactions_frame)[2:3] <- c("root_variable", "mean_min_depth")
   occurrences <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
     dplyr::summarize_each_(funs(sum(!is.na(.))), vars) %>% as.data.frame()
+  if(mean_sample == "all_trees"){
+    non_occurrences <- occurrences
+    non_occurrences[, -1] <- forest$ntree - occurrences[, -1]
+    interactions_frame[is.na(as.matrix(interactions_frame))] <- 0
+    interactions_frame[, -1] <- (interactions_frame[, -1] * occurrences[, -1] +
+      as.matrix(non_occurrences[, -1]) %*% diag(mean_tree_depth))/forest$ntree
+  } else if(mean_sample == "top_trees"){
+    non_occurrences <- occurrences
+    non_occurrences[, -1] <- forest$ntree - occurrences[, -1]
+    non_occurrences[, -1] <- non_occurrences[, -1] - min(non_occurrences[, -1])
+    interactions_frame[is.na(as.matrix(interactions_frame))] <- 0
+    interactions_frame[, -1] <- (interactions_frame[, -1] * occurrences[, -1] +
+                                   as.matrix(non_occurrences[, -1]) %*% diag(mean_tree_depth))/forest$ntree
+  } else if(mean_sample == "relevant_trees"){
+    interactions_frame <-
+      min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
+      dplyr::summarize_each_(funs(mean(., na.rm = TRUE)), vars) %>% as.data.frame()
+  }
+  interactions_frame <- reshape2::melt(interactions_frame, id.vars = "variable")
+  colnames(interactions_frame)[2:3] <- c("root_variable", "mean_min_depth")
   occurrences <- reshape2::melt(occurrences, id.vars = "variable")
   colnames(occurrences)[2:3] <- c("root_variable", "occurrences")
   interactions_frame <- merge(interactions_frame, occurrences)
@@ -108,11 +105,11 @@ min_depth_interactions <- function(forest, vars){
     data.table::rbindlist()
   min_depth_frame <- dplyr::group_by(forest_table, tree, `split var`) %>%
     dplyr::summarize(min(depth))
-  colnames(min_depth_frame) <- c("tree", "variable", "uncond_mean_min_depth")
+  colnames(min_depth_frame) <- c("tree", "variable", "minimal_depth")
   min_depth_frame <- as.data.frame(min_depth_frame[!is.na(min_depth_frame$variable),])
-  importance_frame <- aggregate(uncond_mean_min_depth ~ variable, data = min_depth_frame, mean)
+  importance_frame <- get_min_depth_means(min_depth_frame, min_depth_count(min_depth_frame), uncond_mean_sample)
+  colnames(importance_frame)[2] <- "uncond_mean_min_depth"
   interactions_frame <- merge(interactions_frame, importance_frame)
-  return(interactions_frame)
 }
 
 #' Plot the top mean conditional minimal depth
@@ -120,10 +117,14 @@ min_depth_interactions <- function(forest, vars){
 #' @param interactions_frame A data frame produced by the min_depth_interactions_means() function
 #' @param k The number of best interactions to plot, if set to NULL then all plotted
 #' @param main A string to be used as title of the plot
+#'
 #' @return A ggplot2 object
+#'
 #' @import ggplot2
+#'
 #' @examples
 #' plot_min_depth_interactions(min_depth_interactions(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris)))
+#'
 #' @export
 plot_min_depth_interactions <- function(interactions_frame, k = 30,
                                         main = paste0("Mean minimal depth for ",
@@ -143,6 +144,47 @@ plot_min_depth_interactions <- function(interactions_frame, k = 30,
     scale_linetype_manual(name = NULL, values = 1) + theme_bw() +
     scale_shape_manual(name = NULL, values = 19) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  if(!is.null(main)){
+    plot <- plot + ggtitle(main)
+  }
+  return(plot)
+}
+
+#' Plot the prediction of the forest for a grid of values of two numerical variables
+#'
+#' @param forest A randomForest object
+#' @param data The data frame on which forest was trained
+#' @param variable1 A character string with the name a numerical predictor that will on X-axis
+#' @param variable2 A character string with the name a numerical predictor that will on Y-axis
+#' @param main A string to be used as title of the plot
+#'
+#' @return A ggplot2 object
+#'
+#' @import ggplot2
+#'
+#' @examples
+#' plot_predict_interaction(randomForest::randomForest(Species ~., data = iris), iris, "Petal.Width", "Sepal.Width")
+#'
+#' @export
+plot_predict_interaction <- function(forest, data, variable1, variable2,
+                                     main = paste0("Prediction of the forest for different values of ",
+                                                   paste0(variable1, paste0(" and ", variable2)))){
+  newdata <- expand.grid(seq(min(data[[variable1]]), max(data[[variable1]]), length.out = 100),
+                         seq(min(data[[variable2]]), max(data[[variable2]]), length.out = 100))
+  colnames(newdata) <- c(variable1, variable2)
+  if(as.character(forest$call$formula)[3] == "."){
+    other_vars <- setdiff(names(data), as.character(forest$call$formula)[2])
+  } else {
+    other_vars <- labels(terms(as.formula(forest$call$formula)))
+  }
+  other_vars <- setdiff(other_vars, c(variable1, variable2))
+  n <- nrow(data)
+  for(i in other_vars){
+    newdata[[i]] <- data[[i]][sample(1:n, nrow(newdata), replace = TRUE)]
+  }
+  newdata$prediction <- predict(forest, newdata, type = "response")
+  plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, color = "prediction")) +
+    geom_point(shape = 15, size = 1.5) + theme_bw()
   if(!is.null(main)){
     plot <- plot + ggtitle(main)
   }

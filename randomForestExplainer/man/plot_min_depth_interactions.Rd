@@ -23,4 +23,5 @@ Plot the top mean conditional minimal depth
 }
 \examples{
 plot_min_depth_interactions(min_depth_interactions(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris)))
+
 }

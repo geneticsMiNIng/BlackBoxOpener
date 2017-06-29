@@ -4,12 +4,17 @@
 \alias{min_depth_interactions}
 \title{Calculate mean conditional minimal depth}
 \usage{
-min_depth_interactions(forest, vars)
+min_depth_interactions(forest, vars, mean_sample = "top_trees",
+  uncond_mean_sample = mean_sample)
 }
 \arguments{
 \item{forest}{A randomForest object}
 
 \item{vars}{A character vector with variables with respect to which conditional minimal depth will be calculated}
+
+\item{mean_sample}{The sample of trees on which conditional mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"}
+
+\item{uncond_mean_sample}{The sample of trees on which unconditional mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"}
 }
 \value{
 A data frame with each observarion giving the means of conditional minimal depth and the size of sample for a given interaction

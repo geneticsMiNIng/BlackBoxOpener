@@ -132,7 +132,8 @@ plot_multi_way_importance <- function(importance_frame, x_measure = "mean_min_de
                                                             measures = c(x_measure, y_measure, size_measure)), ]
   if(!is.null(size_measure)){
     if(size_measure == "p_value"){
-      data$p_value <- cut(data$p_value, breaks = c(-Inf, 0.01, 0.05, 0.1, Inf), labels = c("***", "**", "*", " "))
+      data$p_value <- cut(data$p_value, breaks = c(-Inf, 0.01, 0.05, 0.1, Inf),
+                          labels = c("<0.01", "[0.01, 0.05)", "[0.05, 0.1)", ">=0.1"), right = FALSE)
       plot <- ggplot(data, aes_string(x = x_measure, y = y_measure)) +
         geom_point(aes_string(color = size_measure), size = 3) +
         geom_point(data = data_for_labels, color = "black", stroke = 2, size = 3, aes(fill = "top"), shape = 21) +

@@ -4,8 +4,9 @@
 \alias{plot_min_depth_distribution}
 \title{Plot the distribution of minimal depth in a random forest}
 \usage{
-plot_min_depth_distribution(min_depth_frame, k = 10, min_no_of_trees = 0.5 *
-  max(min_depth_count(min_depth_frame)[[2]]$no_of_occurances))
+plot_min_depth_distribution(min_depth_frame, k = 10, min_no_of_trees = 0,
+  mean_sample = "top_trees", mean_scale = FALSE, mean_round = 2,
+  main = "Distribution of minimal depth and its mean")
 }
 \arguments{
 \item{min_depth_frame}{A data frame output of min_depth_distribution function}
@@ -13,6 +14,14 @@ plot_min_depth_distribution(min_depth_frame, k = 10, min_no_of_trees = 0.5 *
 \item{k}{The maximal number of variables with lowest mean minimal depth to be used for plotting}
 
 \item{min_no_of_trees}{The minimal number of trees in which a variable has to be used for splitting to be used for plotting}
+
+\item{mean_sample}{The sample of trees on which mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"}
+
+\item{mean_scale}{Logical: should the values of mean minimal depth be rescaled to the interval [0,1]?}
+
+\item{mean_round}{The number of digits used for displaying mean minimal depth}
+
+\item{main}{A string to be used as title of the plot}
 }
 \value{
 A ggplot object

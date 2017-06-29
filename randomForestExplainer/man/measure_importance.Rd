@@ -4,10 +4,12 @@
 \alias{measure_importance}
 \title{Importance of variables in a random forest}
 \usage{
-measure_importance(forest)
+measure_importance(forest, mean_sample = "top_trees")
 }
 \arguments{
 \item{forest}{A random forest produced by the function randomForest with option localImp = TRUE}
+
+\item{mean_sample}{The sample of trees on which mean minimal depth is calculated, possible values are "all_trees", "top_trees", "relevant_trees"}
 }
 \value{
 A data frame with rows corresponding to variables and columns to various measures of importance of variables

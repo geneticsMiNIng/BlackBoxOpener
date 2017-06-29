@@ -316,11 +316,12 @@ The same works for the PISA 2015 dataset, for which we consider regression. To d
 
 # pisa <- na.omit(student2012[,c(1, 4, 12, 13, 18:20, 39, 61:62, 114, 488, 457, 501)])
 # pisa <- pisa[pisa$CNT %in% c("Austria", "Belgium", "Czech Republic", "Germany", "Denmark", "Spain", "Estonia", "Finland", "France", "United Kingdom", "Greece", "Hungary", "Ireland", "Italy", "Lithuania", "Luxembourg", "Latvia", "Netherlands", "Poland", "Portugal", "Slovak Republic", "Slovenia", "Sweden", "Romania", "Croatia", "Bulgaria"),] # consider only EU countries to reduce the size
-# pisa <- pisa[pisa$CNT %in% c(), ] # only the Visegrad group to begin with
-# pisa$CNT <- factor(pisa$CNT)
-
 # save(pisa, file = "PISA.rda")
 load("PISA.rda")
+
+# Further reduce the size
+pisa <- pisa[pisa$CNT %in% c("Czech Republic", "Hungary", "Poland", "Slovak Republic"), ] # only the Visegrad group
+pisa$CNT <- factor(pisa$CNT)
 ```
 
 We build a forest and summarize it:
