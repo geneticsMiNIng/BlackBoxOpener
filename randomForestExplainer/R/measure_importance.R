@@ -7,8 +7,8 @@
 #'
 #' @return A data frame with rows corresponding to variables and columns to various measures of importance of variables
 #'
-#' @importFrom dplyr `%>%`
-#' @importFrom data.table rbindlist()
+#' @importFrom dplyr "%>%"
+#' @importFrom data.table rbindlist
 #'
 #' @examples
 #' measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE))

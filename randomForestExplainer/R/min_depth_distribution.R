@@ -23,7 +23,7 @@ calculate_tree_depth <- function(frame){
 #'
 #' @return A data frame with the value of minimal depth for every variable in every tree
 #'
-#' @importFrom dplyr `%>%`
+#' @importFrom dplyr "%>%"
 #' @importFrom data.table rbindlist
 #'
 #' @examples
@@ -95,6 +95,7 @@ get_min_depth_means <- function(min_depth_frame, min_depth_count_list, mean_samp
 #' @return A ggplot object
 #'
 #' @import ggplot2
+#' @importFrom dplyr "%>%"
 #'
 #' @examples
 #' plot_min_depth_distribution(min_depth_distribution(randomForest::randomForest(Species ~ ., data = iris)))
