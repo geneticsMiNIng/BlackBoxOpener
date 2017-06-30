@@ -7,7 +7,7 @@
 #'
 #' @return A data frame with rows corresponding to variables and columns to various measures of importance of variables
 #'
-#' @importFrom dplyr "%>%"
+#' @import dplyr
 #' @importFrom data.table rbindlist
 #'
 #' @examples

@@ -57,7 +57,7 @@ min_depth_interactions_values <- function(forest, vars){
 #'
 #' @return A data frame with each observarion giving the means of conditional minimal depth and the size of sample for a given interaction
 #'
-#' @importFrom dplyr "%>%"
+#' @import dplyr
 #' @importFrom data.table rbindlist
 #'
 #' @examples
