@@ -30,6 +30,6 @@ explain_forest <- function(forest, interactions = FALSE, data = NULL, vars = NUL
   environment$measures <- measures
   directory <- getwd()
   rmarkdown::render(paste0(path.package("randomForestExplainer"), "/templates/Explain_forest_template.rmd"),
-                    "html_document", output_file = paste0(directory, "/Summary_of_your_forest.html"),
+                    "html_document", output_file = paste0(directory, "/Your_forest_explained.html"),
                     envir = environment)
 }
