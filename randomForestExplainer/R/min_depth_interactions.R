@@ -88,10 +88,11 @@ min_depth_interactions <- function(forest, vars, mean_sample = "top_trees",
   } else if(mean_sample == "top_trees"){
     non_occurrences <- occurrences
     non_occurrences[, -1] <- forest$ntree - occurrences[, -1]
-    non_occurrences[, -1] <- non_occurrences[, -1] - min(non_occurrences[, -1])
+    minimum_non_occurrences <- min(non_occurrences[, -1])
+    non_occurrences[, -1] <- non_occurrences[, -1] - minimum_non_occurrences
     interactions_frame[is.na(as.matrix(interactions_frame))] <- 0
     interactions_frame[, -1] <- (interactions_frame[, -1] * occurrences[, -1] +
-                                   as.matrix(non_occurrences[, -1]) %*% diag(mean_tree_depth))/forest$ntree
+                                   as.matrix(non_occurrences[, -1]) %*% diag(mean_tree_depth))/(forest$ntree - minimum_non_occurrences)
   }
   interactions_frame <- reshape2::melt(interactions_frame, id.vars = "variable")
   colnames(interactions_frame)[2:3] <- c("root_variable", "mean_min_depth")
