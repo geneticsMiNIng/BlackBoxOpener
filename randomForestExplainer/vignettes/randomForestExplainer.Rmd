@@ -88,7 +88,7 @@ The vertical bar indicates the mean minimal depth rescaled such that the maximal
 Below, we use the function again with different options:
 
 ```{r, fig.width = 7, fig.height = 7}
-plot_min_depth_distribution(min_depth_frame, k = 15, min_no_of_trees = 50)
+plot_min_depth_distribution(min_depth_frame, min_no_of_trees = 60, mean_sample = "relevant_trees")
 ```
 
 Of course, the result is very sensitive to changes in parameters `k` and `min_no_of_trees`. This is because we have so many variables and their occurance as split variables is generally rare (less than 0.1%). That is just another argument for looking at the whole distribution of minimal depth instead of mean minimal depth, especially for such datasets as this one.
@@ -136,18 +136,10 @@ The next step is to plot two or three of those measures against each other. This
 
 Below, we use the Multi-way importance plot to visualize our forest for four different sets of parameters:
 
-```{r, fig.width = 7, fig.height = 7}
+```{r, fig.width = 10, fig.height = 5}
 # Possible measures for classification: "mean_min_depth", "no_of_nodes", "accuracy_decrease", "gini_decrease", "no_of_trees", "times_a_root", "p_value"
-plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
-                          y_measure = "no_of_trees", size_measure = "gini_decrease", 
-                          min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          no_of_labels = 10, 
-                          main = "Multi-way importance plot")
-plot_multi_way_importance(importance_frame, x_measure = "mean_min_depth", 
-                          y_measure = "no_of_nodes", size_measure = "accuracy_decrease", 
-                          min_no_of_trees = 0.2*max(importance_frame$no_of_trees),
-                          no_of_labels = 10, 
-                          main = "Multi-way importance plot")
+plot_multi_way_importance(importance_frame, size_measure = "no_of_nodes", min_no_of_trees = 30)
+plot_multi_way_importance(importance_frame, x_measure = "accuracy_decrease", y_measure = "gini_decrease", size_measure = "p_value")
 ```
 
 Note, that the above plots are almost identical -- that is because the number of nodes is in `r sum(importance_frame$no_of_trees == importance_frame$no_of_nodes)` out of `r nrow(importance_frame)` cases identical to the number of trees, as the trees in our forest are pretty short. This might not be the case for other datasets and either of the two measures might be preffered (they can also be compared using this plot).

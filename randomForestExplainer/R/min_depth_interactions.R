@@ -35,11 +35,13 @@ min_depth_interactions_values <- function(forest, vars){
   interactions_frame <-
     data.table::as.data.table(interactions_frame)[, conditional_depth(as.data.frame(.SD), vars), by = tree] %>% as.data.frame()
   mean_tree_depth <- dplyr::group_by(interactions_frame[, c("tree", vars)], tree) %>%
-    dplyr::summarize_each_(funs(max(., na.rm = TRUE)), vars) %>% as.data.frame()
+    dplyr::summarize_at(vars, funs(max(., na.rm = TRUE))) %>% as.data.frame()
+  mean_tree_depth[mean_tree_depth == -Inf] <- NA
   mean_tree_depth <- colMeans(mean_tree_depth[, vars], na.rm = TRUE)
   min_depth_interactions_frame <-
     interactions_frame %>% dplyr::group_by(tree, `split var`) %>%
-    dplyr::summarize_each_(funs(min(., na.rm = TRUE)), vars) %>% as.data.frame()
+    dplyr::summarize_at(vars, funs(min(., na.rm = TRUE))) %>% as.data.frame()
+  min_depth_interactions_frame[min_depth_interactions_frame == Inf] <- NA
   min_depth_interactions_frame <- min_depth_interactions_frame[!is.na(min_depth_interactions_frame$`split var`), ]
   colnames(min_depth_interactions_frame)[2] <- "variable"
   min_depth_interactions_frame[, -c(1:2)] <- min_depth_interactions_frame[, -c(1:2)] - 1
@@ -72,11 +74,11 @@ min_depth_interactions <- function(forest, vars, mean_sample = "top_trees",
   min_depth_interactions_frame <- min_depth_interactions_frame[[1]]
   interactions_frame <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
-    dplyr::summarize_each_(funs(mean(., na.rm = TRUE)), vars) %>% as.data.frame()
+    dplyr::summarize_at(vars, funs(mean(., na.rm = TRUE))) %>% as.data.frame()
   interactions_frame[is.na(as.matrix(interactions_frame))] <- NA
   occurrences <-
     min_depth_interactions_frame %>% dplyr::group_by(variable) %>%
-    dplyr::summarize_each_(funs(sum(!is.na(.))), vars) %>% as.data.frame()
+    dplyr::summarize_at(vars, funs(sum(!is.na(.)))) %>% as.data.frame()
   if(mean_sample == "all_trees"){
     non_occurrences <- occurrences
     non_occurrences[, -1] <- forest$ntree - occurrences[, -1]
