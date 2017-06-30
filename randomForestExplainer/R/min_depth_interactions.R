@@ -1,6 +1,6 @@
 # Calculate conditional depth in a tree with respect to all variables from vector vars
 conditional_depth <- function(frame, vars){
-  index <- as.data.table(frame)[, .SD[which.min(depth), "number"], by = `split var`]
+  index <- data.table::as.data.table(frame)[, .SD[which.min(depth), "number"], by = `split var`]
   index <- index[!is.na(index$`split var`), ]
   if(any(index$`split var` %in% vars)){
     for(j in vars){
@@ -29,10 +29,11 @@ min_depth_interactions_values <- function(forest, vars){
   if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
   interactions_frame <-
     lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
-             calculate_tree_depth() %>% cbind(., tree = i, number = 1:nrow(.))) %>% data.table::rbindlist() %>% as.data.frame()
+             calculate_tree_depth() %>% cbind(., tree = i, number = 1:nrow(.))) %>%
+  data.table::rbindlist() %>% as.data.frame()
   interactions_frame[vars] <- as.numeric(NA)
   interactions_frame <-
-    as.data.table(interactions_frame)[, conditional_depth(as.data.frame(.SD), vars), by = tree] %>% as.data.frame()
+    data.table::as.data.table(interactions_frame)[, conditional_depth(as.data.frame(.SD), vars), by = tree] %>% as.data.frame()
   mean_tree_depth <- dplyr::group_by(interactions_frame[, c("tree", vars)], tree) %>%
     dplyr::summarize_each_(funs(max(., na.rm = TRUE)), vars) %>% as.data.frame()
   mean_tree_depth <- colMeans(mean_tree_depth[, vars], na.rm = TRUE)
@@ -56,7 +57,8 @@ min_depth_interactions_values <- function(forest, vars){
 #'
 #' @return A data frame with each observarion giving the means of conditional minimal depth and the size of sample for a given interaction
 #'
-#' @import dplyr
+#' @importFrom dplyr `%>%`
+#' @importFrom data.table rbindlist
 #'
 #' @examples
 #' min_depth_interactions(randomForest::randomForest(Species ~ ., data = iris), vars = names(iris))
@@ -97,8 +99,7 @@ min_depth_interactions <- function(forest, vars, mean_sample = "top_trees",
   interactions_frame$interaction <- paste(interactions_frame$root_variable, interactions_frame$variable, sep = ":")
   forest_table <-
     lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
-             calculate_tree_depth() %>% cbind(tree = i)) %>%
-    data.table::rbindlist()
+             calculate_tree_depth() %>% cbind(tree = i)) %>% rbindlist()
   min_depth_frame <- dplyr::group_by(forest_table, tree, `split var`) %>%
     dplyr::summarize(min(depth))
   colnames(min_depth_frame) <- c("tree", "variable", "minimal_depth")

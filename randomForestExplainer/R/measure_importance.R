@@ -7,7 +7,8 @@
 #'
 #' @return A data frame with rows corresponding to variables and columns to various measures of importance of variables
 #'
-#' @import dplyr
+#' @importFrom dplyr `%>%`
+#' @importFrom data.table rbindlist()
 #'
 #' @examples
 #' measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE))
@@ -16,8 +17,7 @@
 measure_importance <- function(forest, mean_sample = "top_trees"){
   forest_table <-
     lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
-             calculate_tree_depth() %>% cbind(tree = i)) %>%
-    data.table::rbindlist()
+             calculate_tree_depth() %>% cbind(tree = i)) %>% rbindlist()
   min_depth_frame <- dplyr::group_by(forest_table, tree, `split var`) %>%
     dplyr::summarize(min(depth))
   colnames(min_depth_frame) <- c("tree", "variable", "minimal_depth")
@@ -72,6 +72,8 @@ measure_importance <- function(forest, mean_sample = "top_trees"){
 #'
 #' @return A character vector with names of k variables with highest sum of rankings
 #'
+#' @importFrom data.table frankv
+#'
 #' @examples
 #' important_variables(measure_importance(randomForest::randomForest(Species ~ ., data = iris, localImp = TRUE)))
 #'
@@ -79,9 +81,9 @@ measure_importance <- function(forest, mean_sample = "top_trees"){
 important_variables <- function(importance_frame, k = 15, measures = names(importance_frame)[2:5],
                                 ties_action = "all"){
   rankings <- data.frame(variable = importance_frame$variable, mean_min_depth =
-                           data.table::frankv(importance_frame$mean_min_depth, ties.method = "dense"),
+                           frankv(importance_frame$mean_min_depth, ties.method = "dense"),
                          p_value =
-                           data.table::frankv(importance_frame$p_value, ties.method = "dense"),
+                           frankv(importance_frame$p_value, ties.method = "dense"),
                          apply(importance_frame[, -c(1, 2, 8)], 2,
                                function(x) frankv(x, order = -1, ties.method = "dense")))
   rankings$index <- rowSums(rankings[, measures])

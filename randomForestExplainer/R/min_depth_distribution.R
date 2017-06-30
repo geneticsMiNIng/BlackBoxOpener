@@ -23,7 +23,7 @@ calculate_tree_depth <- function(frame){
 #'
 #' @return A data frame with the value of minimal depth for every variable in every tree
 #'
-#' @import dplyr
+#' @importFrom dplyr `%>%`
 #' @importFrom data.table rbindlist
 #'
 #' @examples
@@ -34,8 +34,7 @@ min_depth_distribution <- function(forest){
   if(!("randomForest" %in% class(forest))) stop("The object you supplied is not a random forest!")
   forest_table <-
     lapply(1:forest$ntree, function(i) randomForest::getTree(forest, k = i, labelVar = T) %>%
-             calculate_tree_depth() %>% cbind(tree = i)) %>%
-    data.table::rbindlist()
+             calculate_tree_depth() %>% cbind(tree = i)) %>% rbindlist()
   min_depth_frame <- dplyr::group_by(forest_table, tree, `split var`) %>%
     dplyr::summarize(min(depth))
   colnames(min_depth_frame) <- c("tree", "variable", "minimal_depth")
@@ -66,7 +65,7 @@ get_min_depth_means <- function(min_depth_frame, min_depth_count_list, mean_samp
   if(mean_sample == "all_trees"){
     min_depth_count_list[[1]][is.na(min_depth_count_list[[1]]$minimal_depth), "minimal_depth"] <- min_depth_count_list[[3]]
     min_depth_means <-
-      as.data.table(min_depth_count_list[[1]])[, weighted.mean(.SD[["minimal_depth"]], .SD[["count"]]),
+      data.table::as.data.table(min_depth_count_list[[1]])[, weighted.mean(.SD[["minimal_depth"]], .SD[["count"]]),
                                                by = variable] %>% as.data.frame()
   } else if(mean_sample == "top_trees"){
     min_depth_count_list[[1]][is.na(min_depth_count_list[[1]]$minimal_depth), "count"] <-
@@ -74,7 +73,7 @@ get_min_depth_means <- function(min_depth_frame, min_depth_count_list, mean_samp
       min(min_depth_count_list[[1]][is.na(min_depth_count_list[[1]]$minimal_depth), "count"])
     min_depth_count_list[[1]][is.na(min_depth_count_list[[1]]$minimal_depth), "minimal_depth"] <- min_depth_count_list[[3]]
     min_depth_means <-
-      as.data.table(min_depth_count_list[[1]])[, weighted.mean(.SD[["minimal_depth"]], .SD[["count"]]),
+      data.table::as.data.table(min_depth_count_list[[1]])[, weighted.mean(.SD[["minimal_depth"]], .SD[["count"]]),
                                                by = variable] %>% as.data.frame()
   } else if(mean_sample == "relevant_trees"){
     min_depth_means <- stats::aggregate(minimal_depth ~ variable, data = min_depth_frame, mean)
@@ -94,6 +93,8 @@ get_min_depth_means <- function(min_depth_frame, min_depth_count_list, mean_samp
 #' @param main A string to be used as title of the plot
 #'
 #' @return A ggplot object
+#'
+#' @import ggplot2
 #'
 #' @examples
 #' plot_min_depth_distribution(min_depth_distribution(randomForest::randomForest(Species ~ ., data = iris)))

@@ -22,9 +22,6 @@ This is a preliminary draft of the vignette for `randomForestExplainer` package.
 I will use the following packages:
 
 ```{r}
-library(data.table)
-library(dplyr)
-library(ggplot2)
 library(randomForest)
 library(randomForestExplainer)
 ```
@@ -40,11 +37,11 @@ load("GlioblastomaWide.rda")
 First I need to change our dependent variable into a factor and remove variables for which there are NAs (otherewise we would have to remove corresponding observations to build a random forest and our sample is very small anyway). Additionally, I remove the variable `sampleID` which is just the ID of the patient.
 
 ```{r}
+GlioblastomaWide <- GlioblastomaWide[, -1]
 GlioblastomaWide$death1y <- as.factor(GlioblastomaWide$death1y)
 remove <- is.na(GlioblastomaWide) %>% colSums()
 GlioblastomaWide <- GlioblastomaWide[, remove == 0]
 rm(remove)
-GlioblastomaWide <- GlioblastomaWide[, -1]
 ```
 
 Now, I use the `randomForest` package to build a random forest for the data. I need the forest to have as many trees as possible, as with thousands of variables the probablility of each being considered for a split of a node is low and for analyzing the structure of the random forest I need a reasonable number of such instances for each variable, as I cannot say anything about the importance of a variable that was not even considered for a split. Moreover, we will analyze measures of importance of variables so we set `importance = TRUE`.
@@ -53,7 +50,7 @@ As building of the below forest takes a long time I load it from the memory.
 
 ```{r}
 # set.seed(2017)
-# forest <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000, importance = TRUE)
+# forest <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000, localImp = TRUE)
 # save(forest, file = "GlioblastomaWide_forest.rda")
 load("GlioblastomaWide_forest.rda")
 ```
