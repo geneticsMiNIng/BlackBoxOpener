@@ -208,7 +208,7 @@ head(interactions_frame)
 As we can suspect many interactions do not occur at all (we have a lot of variables and the trees are very short due to a small number of observations), so we should look at those that do:
 
 ```{r}
-head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE), ])
+head(interactions_frame[order(interactions_frame$occurrences, decreasing = TRUE), ])
 ```
 
 The most frequent interaction in this forest occured only three times, which makes the analysis of interactions meaningless. Therefore, we build another random forest for our data with increased `mtry` parameter, which increases the chances of picking each variable for splitting at every node -- hopefully this will make meaningful interactions appear more frequently. We also select the conditioning variables based on the new importance measures table.
@@ -219,13 +219,13 @@ The most frequent interaction in this forest occured only three times, which mak
 # set.seed(2017)
 # forest_v2 <- randomForest(death1y ~ ., data = GlioblastomaWide, ntree = 10000, mtry = floor(ncol(GlioblastomaWide)/3), importance = TRUE, localImp = TRUE)
 # save(forest_v2, file = "GlioblastomaWide_forest_v2.rda")
-load("GlioblastomaWide_forest_v2.rda")
+load("GlioblastomaWide_forest_v2.rda"); rm(forest)
 importance_frame <- measure_importance(forest_v2)
 vars <- important_variables(importance_frame, k = 20, measures = c("mean_min_depth", "no_of_trees"))
 # interactions_frame <- min_depth_interactions(forest_v2, vars)
 # save(interactions_frame, file = "GlioblastomaWide_interactions_frame_v2.rda")
 load("GlioblastomaWide_interactions_frame_v2.rda")
-head(interactions_frame[order(interactions_frame$occurances, decreasing = TRUE), ])
+head(interactions_frame[order(interactions_frame$occurrences, decreasing = TRUE), ])
 ```
 
 As we can see in the new forest the most frequent interaction occurs 29 times, so analyzing interactions starts to make sens and we can show the ones with lowest mean minimal depth on a plot using the  `interactions_frame` function, which compares the mean minimal depth of most frequent interaction to its minimal value among interactions:
