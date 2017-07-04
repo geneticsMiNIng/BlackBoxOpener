@@ -191,7 +191,11 @@ plot_predict_interaction <- function(forest, data, variable1, variable2, grid = 
                            low = "blue", high = "red")
   } else if(forest$type == "classification"){
     id_vars <- colnames(newdata)
-    newdata[, paste0("probability_", forest$classes[-1])] <- predict(forest, newdata, type = "prob")[, -1]
+    if(length(forest$classes) == 2){
+      newdata[, paste0("probability_", forest$classes[-1])] <- predict(forest, newdata, type = "prob")[, -1]
+    } else {
+      newdata[, paste0("probability_", forest$classes)] <- predict(forest, newdata, type = "prob")
+    }
     newdata <- reshape2::melt(newdata, id.vars = id_vars)
     newdata$prediction <- newdata$value
     plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, fill = "prediction")) +
