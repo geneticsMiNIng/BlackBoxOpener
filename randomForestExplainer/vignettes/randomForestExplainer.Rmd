@@ -330,13 +330,13 @@ summarize_forest(forest_pisa, interactions = TRUE)
 To easily compare the results of using `randomForestExplainer` to the ones obtained by `ggRandomForests`, another package dealing with random forest visualisation, we also consider the regression example for the `Boston` dataset from package `MASS`, which was used in the package vignette for `ggRandomForests`. We do that with the following code:
 
 ```{r, eval = FALSE}
-# data(Boston, package = "MASS")
-# Boston$chas <- as.logical(Boston$chas)
+data(Boston, package = "MASS")
+Boston$chas <- as.logical(Boston$chas)
 # set.seed(2017)
 # forest_Boston <- randomForest(medv ~ ., data = Boston, ntree = 1000, localImp = TRUE)
 # save(forest_Boston, file = "Boston_forest.rda")
 load("Boston_forest.rda")
-summarize_forest(forest_Boston, interactions = TRUE)
+explain_forest(forest_Boston, interactions = TRUE, Boston)
 ```
 
 [Boston forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Boston_summary.html)

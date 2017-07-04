@@ -26,7 +26,7 @@ formatRound(datatable(interactions_frame), c(3, 6), digits = 4)
 
 ### Prediction on a grid
 
-The plots below show predictions of the random forest depending on values of components of an interaction (the values of remaining predictors are sampled from their empirical distribution) for up to three most frequent interactions that consist of two numerical variables.
+The plots below show predictions of the random forest depending on values of components of an interaction (the values of remaining predictors are sampled from their empirical distribution) for up to `r no_of_pred_plots` most frequent interactions that consist of two numerical variables.
 
 ```{r}
 interactions_frame <- merge(interactions_frame, data.frame(variable = names(data), class = sapply(data, class)), all.x = TRUE)
@@ -37,7 +37,7 @@ interactions_frame <- interactions_frame[as.character(interactions_frame$variabl
 if(nrow(interactions_frame) > 0){
   selected <- interactions_frame[1:min(no_of_pred_plots, nrow(interactions_frame)), c("root_variable", "variable")]
   for(i in 1:nrow(selected)){
-    print(plot_predict_interaction(forest, data, paste0(selected$root_variable[i]), paste0(selected$variable[i])))
+    print(plot_predict_interaction(forest, data, paste0(selected$root_variable[i]), paste0(selected$variable[i]), grid = pred_grid))
   }
 } else {
   print("There are no interactions among the ones considered that consists of two numerical variables so we cannot plot prediction of the forest on the grid.")

@@ -4,7 +4,7 @@
 \alias{plot_predict_interaction}
 \title{Plot the prediction of the forest for a grid of values of two numerical variables}
 \usage{
-plot_predict_interaction(forest, data, variable1, variable2,
+plot_predict_interaction(forest, data, variable1, variable2, grid = 100,
   main = paste0("Prediction of the forest for different values of ",
   paste0(variable1, paste0(" and ", variable2))))
 }
@@ -16,6 +16,8 @@ plot_predict_interaction(forest, data, variable1, variable2,
 \item{variable1}{A character string with the name a numerical predictor that will on X-axis}
 
 \item{variable2}{A character string with the name a numerical predictor that will on Y-axis}
+
+\item{grid}{The number of points on the one-dimensional grid on x and y-axis}
 
 \item{main}{A string to be used as title of the plot}
 }

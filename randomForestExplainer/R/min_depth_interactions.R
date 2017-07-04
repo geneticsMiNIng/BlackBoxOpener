@@ -156,6 +156,7 @@ plot_min_depth_interactions <- function(interactions_frame, k = 30,
 #' @param data The data frame on which forest was trained
 #' @param variable1 A character string with the name a numerical predictor that will on X-axis
 #' @param variable2 A character string with the name a numerical predictor that will on Y-axis
+#' @param grid The number of points on the one-dimensional grid on x and y-axis
 #' @param main A string to be used as title of the plot
 #'
 #' @return A ggplot2 object
@@ -166,11 +167,11 @@ plot_min_depth_interactions <- function(interactions_frame, k = 30,
 #' plot_predict_interaction(randomForest::randomForest(Species ~., data = iris), iris, "Petal.Width", "Sepal.Width")
 #'
 #' @export
-plot_predict_interaction <- function(forest, data, variable1, variable2,
+plot_predict_interaction <- function(forest, data, variable1, variable2, grid = 100,
                                      main = paste0("Prediction of the forest for different values of ",
                                                    paste0(variable1, paste0(" and ", variable2)))){
-  newdata <- expand.grid(seq(min(data[[variable1]]), max(data[[variable1]]), length.out = 100),
-                         seq(min(data[[variable2]]), max(data[[variable2]]), length.out = 100))
+  newdata <- expand.grid(seq(min(data[[variable1]]), max(data[[variable1]]), length.out = grid),
+                         seq(min(data[[variable2]]), max(data[[variable2]]), length.out = grid))
   colnames(newdata) <- c(variable1, variable2)
   if(as.character(forest$call$formula)[3] == "."){
     other_vars <- setdiff(names(data), as.character(forest$call$formula)[2])
@@ -184,15 +185,19 @@ plot_predict_interaction <- function(forest, data, variable1, variable2,
   }
   if(forest$type == "regression"){
     newdata$prediction <- predict(forest, newdata, type = "response")
-    plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, color = "prediction")) +
-      geom_point(shape = 15, size = 1.5) + theme_bw()
+    plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, fill = "prediction")) +
+      geom_raster() + theme_bw() +
+      scale_fill_gradient2(midpoint = min(newdata$prediction) + 0.5 * (max(newdata$prediction) - min(newdata$prediction)),
+                           low = "blue", high = "red")
   } else if(forest$type == "classification"){
     id_vars <- colnames(newdata)
-    newdata[, paste0("probability_", forest$classes)] <- predict(forest, newdata, type = "prob")
+    newdata[, paste0("probability_", forest$classes[-1])] <- predict(forest, newdata, type = "prob")[, -1]
     newdata <- reshape2::melt(newdata, id.vars = id_vars)
     newdata$prediction <- newdata$value
-    plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, color = "prediction")) +
-      geom_point(shape = 15, size = 1) + theme_bw() + facet_wrap(~ variable)
+    plot <- ggplot(newdata, aes_string(x = variable1, y = variable2, fill = "prediction")) +
+      geom_raster() + theme_bw() + facet_wrap(~ variable) +
+      scale_fill_gradient2(midpoint = min(newdata$prediction) + 0.5 * (max(newdata$prediction) - min(newdata$prediction)),
+                           low = "blue", high = "red")
   }
   if(!is.null(main)){
     plot <- plot + ggtitle(main)

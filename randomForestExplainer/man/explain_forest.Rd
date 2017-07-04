@@ -5,9 +5,9 @@
 \title{Explain a random forest}
 \usage{
 explain_forest(forest, interactions = FALSE, data = NULL, vars = NULL,
-  no_of_pred_plots = 3, measures = if (forest$type == "classification")
-  c("mean_min_depth", "accuracy_decrease", "gini_decrease", "no_of_nodes",
-  "times_a_root") else c("mean_min_depth", "mse_increase",
+  no_of_pred_plots = 3, pred_grid = 100, measures = if (forest$type ==
+  "classification") c("mean_min_depth", "accuracy_decrease", "gini_decrease",
+  "no_of_nodes", "times_a_root") else c("mean_min_depth", "mse_increase",
   "node_purity_increase", "no_of_nodes", "times_a_root"))
 }
 \arguments{
@@ -20,6 +20,8 @@ explain_forest(forest, interactions = FALSE, data = NULL, vars = NULL,
 \item{vars}{A character vector with variables with respect to which interactions will be considered if NULL then they will be selected using the important_variables() function}
 
 \item{no_of_pred_plots}{The number of most frequent interactions of numeric variables to plot predictions for}
+
+\item{pred_grid}{The number of points on the grid of plot_predict_interaction (decrease in case memory problems)}
 
 \item{measures}{A character vector specifying the importance measures to be used for plotting ggpairs}
 }
