@@ -39,7 +39,7 @@ First I need to change our dependent variable into a factor and remove variables
 ```{r}
 GlioblastomaWide <- GlioblastomaWide[, -1]
 GlioblastomaWide$death1y <- as.factor(GlioblastomaWide$death1y)
-remove <- is.na(GlioblastomaWide) %>% colSums()
+remove <- colSums(is.na(GlioblastomaWide))
 GlioblastomaWide <- GlioblastomaWide[, remove == 0]
 rm(remove)
 ```
@@ -238,14 +238,14 @@ It is worth noting, that interaction analysis is not such a good idea for this p
 
 # Summarize forest
 
-The `summarize_forest()` function is the flagship function of the `randomForestExplainer` package, as it takes your random forest and produces a html report that summarizes all basic results obtained for the forest with the new package. Below, we show the result of running this function with default settings (we only supply the forest and sett interactions = TRUE contrary to the default to show full functionality).
+The `explain_forest()` function is the flagship function of the `randomForestExplainer` package, as it takes your random forest and produces a html report that summarizes all basic results obtained for the forest with the new package. Below, we show the result of running this function with default settings (we only supply the forest and sett interactions = TRUE contrary to the default to show full functionality).
 
 ## Glioblastoma forest: our main example
 
 To explore the importance of variables using all functionality of `randomForestExplainer` we just need to run the following:
 
 ```{r, eval = FALSE}
-summarize_forest(forest, interactions = TRUE)
+explain_forest(forest, interactions = TRUE, GlioblastomaWide, pred_grid = 70)
 ```
 
 Now, in the working directory a file "Summary_of_your_forest.html" appears and it looks like this:
@@ -256,10 +256,10 @@ Now, in the working directory a file "Summary_of_your_forest.html" appears and i
 We repeat this for the second version of our forest:
 
 ```{r, eval = FALSE}
-summarize_forest(forest_v2, interactions = TRUE)
+explain_forest(forest_v2, interactions = TRUE, GlioblastomaWide, pred_grid = 80)
 ```
 
-[Glioblastoma forest version 2 summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Glioblastoma_summary_v2.html)
+[Glioblastoma forest version 2 summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Glioblastoma_explained_v2.html)
 
 ## Multi-class classification: breast cancer data
 
@@ -290,10 +290,10 @@ Now, we build the random forest with an increased number of trees due to a big n
 # forest_brca <- randomForest(SUBTYPE ~ ., data = brca, ntree = 10000, localImp = TRUE)
 # save(forest_brca, file = "BreastCancer_forest.rda")
 load("BreastCancer_forest.rda")
-summarize_forest(forest_brca, interactions = TRUE)
+explain_forest(forest_brca, interactions = TRUE, brca)
 ```
 
-[Breast cancer summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/BreastCancer_summary.html)
+[Breast cancer summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/BreastCancer_forest_explained.html)
 
 ## Regression: PISA data
 
@@ -320,7 +320,7 @@ We build a forest and summarize it:
 # forest_pisa <- randomForest(PV1MATH ~ ., data = pisa, localImp = TRUE)
 # save(forest_pisa, file = "PISA_forest.rda")
 load("PISA_forest.rda")
-summarize_forest(forest_pisa, interactions = TRUE)
+explain_forest(forest_pisa, interactions = TRUE, pisa)
 ```
 
 [PISA forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/PISA_summary.html)
@@ -339,6 +339,6 @@ load("Boston_forest.rda")
 explain_forest(forest_Boston, interactions = TRUE, Boston)
 ```
 
-[Boston forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Boston_summary.html)
+[Boston forest summary](https://rawgit.com/geneticsMiNIng/BlackBoxOpener/master/examples/Boston_forest_explained.html)
 
 
